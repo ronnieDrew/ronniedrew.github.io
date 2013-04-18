@@ -2,12 +2,12 @@
 #      Main Configs       #
 # ----------------------- #
 
-url: http://yoursite.com
-title: My Octopress Blog
-subtitle: A blogging framework for hackers.
-author: Your Name
+url: http://ronnieDrew.github.com
+title: Brewing Code
+subtitle: Bits, bytes & hops
+author: Ronan Gibney
 simple_search: http://google.com/search
-description:
+description: Programming and Beer by Ronan Gibney
 
 # Default date format is "ordinal" (resulting in "July 22nd 2007")
 # You can customize the format as defined in
