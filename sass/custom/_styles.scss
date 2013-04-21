@@ -1,2 +1,169 @@
 // This File is imported last, and will override other styles in the cascade
 // Add styles here to make changes without digging in too much
+
+header hgroup {
+	float: left;
+	height: 150px;
+	display: inline;
+	background-image: url('/images/guinness-cap.png');
+	background-repeat: no-repeat;
+	padding-left: 150px;
+	padding-top: 15px;
+
+	h1 a {
+		color: #222;
+		&:hover { color: #222; }
+		&:visited { color: #222; }
+	}
+}
+
+.page-footer {
+    padding: 20px 0px 20px 0px;
+
+    h3 { color: white; }
+}
+
+.creativecommons {
+    margin-top: 20px;
+    margin-bottom: 10px;
+    text-align: center;
+
+	a {
+        text-decoration: none;
+    }
+}
+
+#creativecommons-img {
+    margin-bottom: 10px;
+}
+
+#avatar {
+	-webkit-border-radius: 50%;
+	-moz-border-radius: 50%;
+	border-radius: 50%;
+	border: 4px solid #AAA;
+}
+
+.elsewhere {
+    list-style: none;
+    margin-left: 0px;
+
+    li {
+        height: 32px;
+        padding-top: 5px;
+
+        a {
+            margin-left: 40px;
+            color: white;
+        }
+    }
+}
+
+#twitter {
+    background-image: url("/images/social-icons/twitter-32x32.png");
+    background-repeat: no-repeat;
+}
+
+#github {
+    background-image: url("/images/social-icons/github-32x32.png");
+    background-repeat: no-repeat;
+}
+
+#googleplus {
+    background-image: url("/images/social-icons/google-plus-32x32.png");
+    background-repeat: no-repeat;
+}
+
+#appdotnet {
+    background-image: url("/images/social-icons/adn-32x32.png");
+    background-repeat: no-repeat;
+}
+
+#aboutme {
+	margin-bottom: 10px;
+
+	h3 {
+		margin-bottom: 5px;
+	}
+
+	p {
+		color: #484848;
+	
+		a {
+		    text-decoration: underline;
+		}
+	}
+
+}
+
+#elsewhere {
+	h3 {
+		margin-bottom: 5px;
+	}
+}
+
+.credit {
+	text-align: center;
+}
+
+/* Smartphones ----------- */
+@media only screen 
+and (min-device-width : 320px) 
+and (max-device-width : 480px) {
+	.mobile-nav {
+		display: none;
+	}
+}
+
+/* Smartphones (landscape) ----------- */
+@media only screen 
+and (min-width : 321px) {
+
+}
+
+/* Smartphones (portrait) ----------- */
+@media only screen 
+and (max-width : 320px) {
+
+}
+
+/* Tablets (portrait and landscape) ----------- */
+@media only screen 
+and (min-device-width : 768px) 
+and (max-device-width : 1024px) {
+
+}
+
+/* Tablets (landscape) ----------- */
+@media only screen 
+and (min-device-width : 768px) 
+and (max-device-width : 1024px) 
+and (orientation : landscape) {
+
+}
+
+/* Tablets (portrait) ----------- */
+@media only screen 
+and (min-device-width : 768px) 
+and (max-device-width : 1024px) 
+and (orientation : portrait) {
+
+}
+
+/* Desktops and laptops ----------- */
+@media only screen 
+and (min-width : 1224px) {
+
+}
+
+/* Large screens ----------- */
+@media only screen 
+and (min-width : 1824px) {
+
+}
+
+/* HiRes Display ----------- */
+@media only screen and (-webkit-min-device-pixel-ratio : 1.5),
+only screen and (min-device-pixel-ratio : 1.5) {
+
+}
