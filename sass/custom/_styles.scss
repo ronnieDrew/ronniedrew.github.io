@@ -1,31 +1,49 @@
 // This File is imported last, and will override other styles in the cascade
 // Add styles here to make changes without digging in too much
 
-header hgroup {
-	float: left;
-	height: 150px;
-	display: inline;
-	background-image: url('/images/guinness-cap.png');
-	background-repeat: no-repeat;
-	padding-left: 150px;
-	padding-top: 15px;
+@media (min-width: 768px) and (max-width: 979px) {
+	aside.sidebar {
+		padding-top: 10px;
+	}	
+}
 
-	h1 a {
-		color: #222;
-		&:hover { color: #222; }
-		&:visited { color: #222; }
+@media only screen and (max-width: 767px) {
+	aside.sidebar {
+		padding-top: 10px;
 	}
 }
 
+body > footer {
+	margin-bottom: 0;
+	
+	-moz-border-radius-bottomleft: 0;
+	-webkit-border-bottom-left-radius: 0;
+	border-bottom-left-radius: 0;
+	-moz-border-radius-bottomright: 0;
+	-webkit-border-bottom-right-radius: 0;
+	border-bottom-right-radius: 0;	
+}
+
+#content > div, 
+#content > article {
+	padding-bottom: 3em;
+}
+
+#content .blog-index article h1 a:hover,
+#blog-archives h1 a:hover {
+	color: #222;	
+}
+
 .page-footer {
-    padding: 20px 0px 20px 0px;
+    //padding: 20px 0px 20px 0px;
+    padding-top: 10px;
 
     h3 { color: white; }
 }
 
 .creativecommons {
-    margin-top: 20px;
-    margin-bottom: 10px;
+    //margin-top: 20px;
+    //margin-bottom: 10px;
     text-align: center;
 
 	a {
@@ -35,6 +53,11 @@ header hgroup {
 
 #creativecommons-img {
     margin-bottom: 10px;
+}
+
+aside.sidebar a.avatar {
+	white-space: normal;
+	word-wrap: normal;
 }
 
 #avatar {
@@ -53,8 +76,7 @@ header hgroup {
         padding-top: 5px;
 
         a {
-            margin-left: 40px;
-            color: white;
+            margin-left: 35px;
         }
     }
 }
@@ -62,21 +84,29 @@ header hgroup {
 #twitter {
     background-image: url("/images/social-icons/twitter-32x32.png");
     background-repeat: no-repeat;
+    background-size: 24px;
+    background-position: 0 8px;
 }
 
 #github {
     background-image: url("/images/social-icons/github-32x32.png");
     background-repeat: no-repeat;
+    background-size: 24px;
+    background-position: 0 8px;
 }
 
 #googleplus {
     background-image: url("/images/social-icons/google-plus-32x32.png");
     background-repeat: no-repeat;
+    background-size: 24px;
+    background-position: 0 8px;
 }
 
 #appdotnet {
     background-image: url("/images/social-icons/adn-32x32.png");
     background-repeat: no-repeat;
+    background-size: 24px;
+    background-position: 0 8px;
 }
 
 #aboutme {
@@ -87,6 +117,8 @@ header hgroup {
 	}
 
 	p {
+		margin-bottom: 0.5em;
+
 		color: #484848;
 	
 		a {
