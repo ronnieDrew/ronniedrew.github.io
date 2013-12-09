@@ -1,0 +1,96 @@
+<div class="highlight"><pre><span class="nx">App</span><span class="p">.</span><span class="nx">TablePageController</span> <span class="o">=</span> <span class="nx">Ember</span><span class="p">.</span><span class="nx">ObjectController</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+  <span class="nx">toggleRowSelection</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">row</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">isSelected</span> <span class="o">=</span> <span class="nx">row</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;isSelected&quot;</span><span class="p">)</span> <span class="o">||</span> <span class="kc">false</span><span class="p">;</span>
+
+    <span class="nx">row</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s2">&quot;isSelected&quot;</span><span class="p">,</span> <span class="o">!</span><span class="nx">isSelected</span><span class="p">);</span>
+  <span class="p">},</span>
+
+  <span class="nx">columns</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">columns</span> <span class="o">=</span> <span class="p">[],</span>
+      <span class="nx">excludedColumns</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="nx">id</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+        <span class="nx">PartitionKey</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+        <span class="nx">RowKey</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+        <span class="nx">isSelected</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+        <span class="nx">partitionKeyChanged</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+        <span class="nx">_</span><span class="o">:</span> <span class="kc">true</span>
+      <span class="p">};</span>
+
+    <span class="nx">_</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;rows&quot;</span><span class="p">),</span> <span class="kd">function</span><span class="p">(</span><span class="nx">element</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">column</span> <span class="k">in</span> <span class="nx">element</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">element</span><span class="p">.</span><span class="nx">hasOwnProperty</span><span class="p">(</span><span class="nx">column</span><span class="p">))</span> <span class="p">{</span>
+          <span class="k">break</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">excludedColumns</span><span class="p">[</span><span class="nx">column</span><span class="p">]</span> <span class="o">&amp;&amp;</span> <span class="nx">_</span><span class="p">.</span><span class="nx">contains</span><span class="p">(</span><span class="nx">columns</span><span class="p">,</span> <span class="nx">column</span><span class="p">)</span> <span class="o">!==</span> <span class="kc">true</span><span class="p">)</span> <span class="p">{</span>
+          <span class="nx">columns</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">column</span><span class="p">);</span>
+        <span class="p">}</span>
+      <span class="p">}</span>
+    <span class="p">});</span>
+
+    <span class="k">return</span> <span class="nx">columns</span><span class="p">;</span>
+
+  <span class="p">}.</span><span class="nx">property</span><span class="p">(</span><span class="s2">&quot;rows.@each&quot;</span><span class="p">),</span>
+
+  <span class="nx">columnHeaders</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">columnHeaders</span> <span class="o">=</span> <span class="nx">_</span><span class="p">.</span><span class="nx">clone</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;columns&quot;</span><span class="p">));</span>
+
+    <span class="c1">// blank header for &quot;isSelected&quot; column</span>
+    <span class="nx">columnHeaders</span><span class="p">.</span><span class="nx">unshift</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">);</span>
+
+    <span class="k">return</span> <span class="nx">columnHeaders</span><span class="p">;</span>
+  <span class="p">}.</span><span class="nx">property</span><span class="p">(</span><span class="s2">&quot;columns&quot;</span><span class="p">),</span>
+
+  <span class="nx">paginationLinks</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">links</span> <span class="o">=</span> <span class="p">[],</span>
+      <span class="nx">currentPage</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">),</span>
+      <span class="nx">startPage</span> <span class="o">=</span> <span class="p">(</span><span class="nx">currentPage</span> <span class="o">&gt;</span> <span class="mi">5</span><span class="p">)</span> <span class="o">?</span> <span class="p">(</span><span class="nx">currentPage</span> <span class="o">-</span> <span class="mi">5</span><span class="p">)</span> <span class="o">:</span> <span class="mi">1</span><span class="p">,</span>
+      <span class="nx">endPage</span> <span class="o">=</span> <span class="nx">currentPage</span><span class="p">;</span>
+
+    <span class="nx">endPage</span> <span class="o">+=</span> <span class="k">this</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;continuation&quot;</span><span class="p">)</span> <span class="o">?</span> <span class="mi">2</span> <span class="o">:</span> <span class="mi">1</span><span class="p">;</span>
+
+    <span class="nx">links</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">App</span><span class="p">.</span><span class="nx">Page</span><span class="p">.</span><span class="nx">create</span><span class="p">({</span>
+      <span class="nx">id</span><span class="o">:</span> <span class="nx">currentPage</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>
+      <span class="nx">displayText</span><span class="o">:</span> <span class="s2">&quot;&amp;larr;&quot;</span><span class="p">,</span>
+      <span class="nx">disabled</span><span class="o">:</span> <span class="p">(</span><span class="nx">currentPage</span> <span class="o">===</span> <span class="mi">1</span><span class="p">),</span>
+      <span class="nx">isActive</span><span class="o">:</span> <span class="kc">false</span>
+    <span class="p">}));</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="nx">startPage</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+      <span class="nx">links</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">App</span><span class="p">.</span><span class="nx">Page</span><span class="p">.</span><span class="nx">create</span><span class="p">({</span>
+        <span class="nx">id</span><span class="o">:</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="nx">displayText</span><span class="o">:</span> <span class="s2">&quot;1&quot;</span><span class="p">,</span>
+        <span class="nx">disabled</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>
+        <span class="nx">isActive</span><span class="o">:</span> <span class="p">(</span><span class="nx">currentPage</span> <span class="o">===</span> <span class="mi">1</span><span class="p">)</span>
+      <span class="p">}));</span>
+
+      <span class="k">if</span> <span class="p">(</span><span class="nx">startPage</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">links</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">App</span><span class="p">.</span><span class="nx">Page</span><span class="p">.</span><span class="nx">create</span><span class="p">({</span>
+          <span class="nx">id</span><span class="o">:</span> <span class="mi">2</span><span class="p">,</span>
+          <span class="nx">displayText</span><span class="o">:</span> <span class="s2">&quot;...&quot;</span><span class="p">,</span>
+          <span class="nx">disabled</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+          <span class="nx">isActive</span><span class="o">:</span> <span class="kc">false</span>
+        <span class="p">}));</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="nx">startPage</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">endPage</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+      <span class="nx">links</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">App</span><span class="p">.</span><span class="nx">Page</span><span class="p">.</span><span class="nx">create</span><span class="p">({</span>
+        <span class="nx">id</span><span class="o">:</span> <span class="nx">i</span><span class="p">,</span>
+        <span class="nx">displayText</span><span class="o">:</span> <span class="nx">i</span><span class="p">,</span>
+        <span class="nx">disabled</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>
+        <span class="nx">isActive</span><span class="o">:</span> <span class="p">(</span><span class="nx">i</span> <span class="o">===</span> <span class="nx">currentPage</span><span class="p">)</span>
+      <span class="p">}));</span>
+    <span class="p">}</span>
+
+    <span class="nx">links</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">App</span><span class="p">.</span><span class="nx">Page</span><span class="p">.</span><span class="nx">create</span><span class="p">({</span>
+      <span class="nx">id</span><span class="o">:</span> <span class="nx">currentPage</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+      <span class="nx">displayText</span><span class="o">:</span> <span class="s2">&quot;&amp;rarr;&quot;</span><span class="p">,</span>
+      <span class="nx">disabled</span><span class="o">:</span> <span class="k">this</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;continuation&quot;</span><span class="p">)</span> <span class="o">?</span> <span class="kc">false</span> <span class="o">:</span> <span class="kc">true</span><span class="p">,</span> <span class="c1">// Check continuation</span>
+      <span class="nx">isActive</span><span class="o">:</span> <span class="kc">false</span>
+    <span class="p">}));</span>
+
+    <span class="k">return</span> <span class="nx">links</span><span class="p">;</span>
+  <span class="p">}.</span><span class="nx">property</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">)</span>
+<span class="p">});</span>
+</pre></div>

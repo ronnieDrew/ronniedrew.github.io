@@ -1,0 +1,50 @@
+<div class="highlight"><pre><span class="nx">App</span><span class="p">.</span><span class="nx">IndexController</span> <span class="o">=</span> <span class="nx">Ember</span><span class="p">.</span><span class="nx">ObjectController</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+	<span class="nx">storageAccount</span><span class="o">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+	<span class="nx">storageKey</span><span class="o">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+	<span class="nx">attemptedTransition</span><span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+	<span class="nx">credentials</span><span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+
+	<span class="nx">loginDisabled</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+		<span class="kd">var</span> <span class="nx">credentials</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">getProperties</span><span class="p">(</span><span class="s2">&quot;storageAccount&quot;</span><span class="p">,</span> <span class="s2">&quot;storageKey&quot;</span><span class="p">);</span>
+
+		<span class="k">if</span> <span class="p">(</span><span class="nx">credentials</span><span class="p">.</span><span class="nx">storageAccount</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="nx">credentials</span><span class="p">.</span><span class="nx">storageKey</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="p">)</span> <span class="p">{</span>
+			<span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+		<span class="p">}</span>
+
+		<span class="k">return</span> <span class="kc">true</span><span class="p">;</span>
+
+	<span class="p">}.</span><span class="nx">property</span><span class="p">(</span><span class="s2">&quot;storageAccount&quot;</span><span class="p">,</span> <span class="s2">&quot;storageKey&quot;</span><span class="p">),</span>
+
+	<span class="nx">usingSSL</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="p">(</span><span class="nb">document</span><span class="p">.</span><span class="nx">location</span><span class="p">.</span><span class="nx">protocol</span> <span class="o">===</span> <span class="s2">&quot;https:&quot;</span><span class="p">);</span>
+	<span class="p">}.</span><span class="nx">property</span><span class="p">(),</span>
+
+	<span class="nx">login</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+		<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;IndexController:login&quot;</span><span class="p">);</span>
+		
+		<span class="kd">var</span> <span class="nx">self</span> <span class="o">=</span> <span class="k">this</span><span class="p">,</span>
+			<span class="nx">credentials</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">getProperties</span><span class="p">(</span><span class="s2">&quot;storageAccount&quot;</span><span class="p">,</span> <span class="s2">&quot;storageKey&quot;</span><span class="p">),</span>
+			<span class="nx">attemptedTransition</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;attemptedTransition&quot;</span><span class="p">),</span>
+			<span class="nx">tables</span> <span class="o">=</span> <span class="nx">App</span><span class="p">.</span><span class="nx">Tables</span><span class="p">.</span><span class="nx">find</span><span class="p">(</span><span class="nx">credentials</span><span class="p">);</span>
+
+		<span class="nx">tables</span><span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">data</span><span class="p">)</span> <span class="p">{</span>
+			<span class="c1">// success</span>
+			<span class="nx">self</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s2">&quot;credentials&quot;</span><span class="p">,</span> <span class="nx">credentials</span><span class="p">);</span>
+
+			<span class="k">if</span> <span class="p">(</span><span class="nx">attemptedTransition</span><span class="p">)</span> <span class="p">{</span>
+				<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;retrying transition&quot;</span><span class="p">);</span>
+				<span class="nx">attemptedTransition</span><span class="p">.</span><span class="nx">retry</span><span class="p">();</span>
+				<span class="nx">self</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s2">&quot;attemptedTransition&quot;</span><span class="p">,</span> <span class="kc">null</span><span class="p">);</span>
+			<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+				<span class="nx">self</span><span class="p">.</span><span class="nx">transitionToRoute</span><span class="p">(</span><span class="s2">&quot;tables.index&quot;</span><span class="p">);</span>
+			<span class="p">}</span>
+
+		<span class="p">},</span> <span class="kd">function</span><span class="p">(</span><span class="nx">reason</span><span class="p">)</span> <span class="p">{</span>
+			<span class="c1">// failure</span>
+			<span class="nx">self</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s2">&quot;credentials&quot;</span><span class="p">,</span> <span class="kc">null</span><span class="p">);</span>
+			<span class="nx">self</span><span class="p">.</span><span class="nx">send</span><span class="p">(</span><span class="s2">&quot;error&quot;</span><span class="p">,</span> <span class="nx">reason</span><span class="p">);</span>
+		<span class="p">});</span>
+
+	<span class="p">}</span>
+<span class="p">});</span>
+</pre></div>

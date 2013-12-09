@@ -1,0 +1,24 @@
+<div class="highlight"><pre><span class="nv">$package</span> <span class="p">=</span> <span class="s1">&#39;sqlio&#39;</span>
+<span class="nv">$build</span> <span class="p">=</span> <span class="s1">&#39;1&#39;</span>
+<span class="nv">$clsid</span><span class="p">=</span><span class="s1">&#39;{DD971DE9-FAF0-4A15-9BE4-5D766B05D11E}&#39;</span>
+
+<span class="k">try</span> <span class="p">{</span>
+  
+  <span class="k">if</span> <span class="p">(</span><span class="nb">Test-Path</span> <span class="s2">&quot;HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$clsid&quot;</span><span class="p">)</span> <span class="p">{</span>
+    
+    <span class="n">Uninstall-ChocolateyPackage</span> <span class="nv">$package</span> <span class="s1">&#39;msi&#39;</span> <span class="s2">&quot;$clsid /quiet&quot;</span> 
+    <span class="nb">Write-ChocolateySuccess</span> <span class="nv">$package</span>
+
+  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+    <span class="nb">Write-ChocolateyFailure</span> <span class="nv">$package</span> <span class="s2">&quot;$package is not installed!&quot;</span>
+  <span class="p">}</span>
+
+<span class="p">}</span> <span class="k">catch</span> <span class="p">{</span>
+
+  <span class="nb">Write-ChocolateyFailure</span> <span class="nv">$package</span> <span class="s2">&quot;</span><span class="si">$(</span><span class="err">$</span><span class="si">_.Exception.Message)</span><span class="s2">&quot;</span>
+  <span class="n">throw</span> 
+
+<span class="p">}</span>
+
+<span class="n">With</span> <span class="n">that</span> <span class="n">we</span> <span class="n">just</span> <span class="n">need</span> <span class="n">to</span> <span class="n">create</span> <span class="p">&amp;</span> <span class="n">test</span> <span class="n">the</span> <span class="n">package</span> <span class="n">itself</span><span class="p">.</span> <span class="n">To</span> <span class="n">create</span> <span class="n">the</span> <span class="n">package</span> <span class="n">we</span> <span class="n">just</span> <span class="n">run</span> <span class="p">&lt;</span><span class="n">code</span><span class="p">&gt;</span><span class="n">cpack</span> <span class="p">.\</span><span class="n">sqlio</span><span class="p">.</span><span class="n">nuspec</span><span class="p">&lt;/</span><span class="n">code</span><span class="p">&gt;</span> <span class="k">in</span> <span class="n">package</span> <span class="n">directory</span><span class="p">,</span> <span class="n">this</span> <span class="n">will</span> <span class="n">bundle</span> <span class="n">our</span> <span class="n">nuspec</span> <span class="n">and</span> <span class="n">PowerShell</span> <span class="n">files</span> <span class="n">into</span> <span class="n">a</span> <span class="n">package</span> <span class="n">called</span> <span class="n">sqlio</span><span class="p">.</span><span class="n">1</span><span class="p">.</span><span class="n">0</span><span class="p">.</span><span class="n">nupkg</span><span class="p">.</span> <span class="n">To</span> <span class="n">test</span> <span class="n">the</span> <span class="n">package</span> <span class="n">we</span> <span class="n">can</span> <span class="n">use</span> <span class="p">&lt;</span><span class="n">code</span><span class="p">&gt;</span><span class="n">cinst</span> <span class="n">sqlio</span> <span class="n">-source</span> <span class="k">%</span><span class="n">cd</span><span class="p">%&lt;/</span><span class="n">code</span><span class="p">&gt;</span> <span class="n">which</span> <span class="n">will</span> <span class="n">tell</span> <span class="n">Chocolatey</span> <span class="n">to</span> <span class="n">install</span> <span class="n">the</span> <span class="n">package</span> <span class="n">using</span> <span class="n">the</span> <span class="n">current</span> <span class="n">directory</span><span class="p">.</span> 
+</pre></div>

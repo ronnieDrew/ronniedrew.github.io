@@ -1,0 +1,69 @@
+<div class="highlight"><pre><span class="nx">App</span><span class="p">.</span><span class="nx">TablePageRoute</span> <span class="o">=</span> <span class="nx">App</span><span class="p">.</span><span class="nx">AuthenticatedRoute</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+  <span class="nx">renderTemplate</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">selectedRowsController</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">controllerFor</span><span class="p">(</span><span class="s2">&quot;selectedRows&quot;</span><span class="p">);</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">render</span><span class="p">();</span>
+
+    <span class="k">this</span><span class="p">.</span><span class="nx">render</span><span class="p">(</span><span class="s2">&quot;table/selectedRows&quot;</span><span class="p">,</span> <span class="p">{</span>
+      <span class="nx">into</span><span class="o">:</span> <span class="s2">&quot;tables&quot;</span><span class="p">,</span>
+      <span class="nx">outlet</span><span class="o">:</span> <span class="s2">&quot;selectedRowsOutlet&quot;</span><span class="p">,</span>
+      <span class="nx">controller</span><span class="o">:</span> <span class="nx">selectedRowsController</span>
+    <span class="p">});</span>
+  <span class="p">},</span>
+
+  <span class="nx">setupController</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">controller</span><span class="p">,</span> <span class="nx">model</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;TablePageRoute:setupController&quot;</span><span class="p">);</span>
+
+    <span class="kd">var</span> <span class="nx">self</span> <span class="o">=</span> <span class="k">this</span><span class="p">,</span>
+      <span class="nx">pageId</span> <span class="o">=</span> <span class="nx">model</span><span class="p">.</span><span class="nx">id</span><span class="p">,</span>
+      <span class="nx">tableId</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">modelFor</span><span class="p">(</span><span class="s2">&quot;table&quot;</span><span class="p">).</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">),</span>
+      <span class="nx">credentials</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;credentials&quot;</span><span class="p">),</span>
+      <span class="nx">continuation</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">_getPageContinuationToken</span><span class="p">(</span><span class="nx">pageId</span> <span class="o">-</span> <span class="mi">1</span><span class="p">);</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">model</span><span class="p">.</span><span class="nx">rows</span><span class="p">)</span> <span class="p">{</span>
+      <span class="nx">model</span> <span class="o">=</span> <span class="nx">App</span><span class="p">.</span><span class="nx">Page</span><span class="p">.</span><span class="nx">find</span><span class="p">(</span><span class="nx">tableId</span><span class="p">,</span> <span class="nx">credentials</span><span class="p">,</span> <span class="nx">pageId</span><span class="p">,</span> <span class="nx">continuation</span><span class="p">);</span>
+
+      <span class="nx">model</span><span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">value</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">// success</span>
+        <span class="nx">self</span><span class="p">.</span><span class="nx">_setPageContinuationToken</span><span class="p">(</span><span class="nx">value</span><span class="p">.</span><span class="nx">id</span><span class="p">,</span> <span class="nx">value</span><span class="p">.</span><span class="nx">continuation</span><span class="p">);</span>
+        <span class="nx">controller</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s2">&quot;model&quot;</span><span class="p">,</span> <span class="nx">value</span><span class="p">);</span>
+      <span class="p">},</span> <span class="kd">function</span><span class="p">(</span><span class="nx">error</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">// failure</span>
+        <span class="k">throw</span> <span class="nx">error</span><span class="p">;</span>
+      <span class="p">});</span>
+    <span class="p">}</span>
+
+  <span class="p">},</span>
+
+  <span class="nx">model</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">params</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;TablePageRoute:model&quot;</span><span class="p">,</span> <span class="nx">params</span><span class="p">);</span>
+
+    <span class="kd">var</span> <span class="nx">pageId</span> <span class="o">=</span> <span class="nb">parseInt</span><span class="p">(</span><span class="nx">params</span><span class="p">.</span><span class="nx">page_id</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span> <span class="o">||</span> <span class="mi">1</span><span class="p">;</span>
+
+    <span class="k">return</span> <span class="nx">App</span><span class="p">.</span><span class="nx">Page</span><span class="p">.</span><span class="nx">create</span><span class="p">({</span><span class="nx">id</span><span class="o">:</span> <span class="nx">pageId</span><span class="p">});</span>
+  <span class="p">},</span>
+
+  <span class="nx">_getPageContinuationToken</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">pageId</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">continuationToken</span> <span class="o">=</span> <span class="kc">null</span><span class="p">,</span>
+      <span class="nx">table</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">modelFor</span><span class="p">(</span><span class="s2">&quot;table&quot;</span><span class="p">),</span>
+      <span class="nx">continuationTokens</span> <span class="o">=</span> <span class="nx">table</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;continuationTokens&quot;</span><span class="p">);</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="nx">continuationTokens</span><span class="p">)</span> <span class="p">{</span>
+      <span class="nx">continuationToken</span> <span class="o">=</span>  <span class="nx">continuationTokens</span><span class="p">[</span><span class="nx">pageId</span><span class="p">];</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="nx">continuationToken</span><span class="p">;</span>
+  <span class="p">},</span>
+
+  <span class="nx">_setPageContinuationToken</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">pageId</span><span class="p">,</span> <span class="nx">continuationToken</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">table</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">modelFor</span><span class="p">(</span><span class="s2">&quot;table&quot;</span><span class="p">),</span>
+      <span class="nx">continuationTokens</span> <span class="o">=</span> <span class="nx">table</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;continuationTokens&quot;</span><span class="p">);</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">continuationTokens</span><span class="p">)</span> <span class="p">{</span>
+      <span class="nx">continuationTokens</span> <span class="o">=</span> <span class="p">{};</span>
+      <span class="nx">table</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s2">&quot;continuationTokens&quot;</span><span class="p">,</span> <span class="nx">continuationTokens</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="nx">continuationTokens</span><span class="p">[</span><span class="nx">pageId</span><span class="p">]</span> <span class="o">=</span> <span class="nx">continuationToken</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">});</span>
+</pre></div>
