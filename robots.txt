@@ -1,4 +1,0 @@
-User-agent: *
-Disallow: 
-
-Sitemap: http://ronnieDrew.github.io/sitemap.xml 
