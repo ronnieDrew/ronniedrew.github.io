@@ -1,0 +1,2061 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Brewing Code]]></title>
+  <link href="http://www.brewingcode.com/atom.xml" rel="self"/>
+  <link href="http://www.brewingcode.com/"/>
+  <updated>2013-12-09T18:17:05+00:00</updated>
+  <id>http://www.brewingcode.com/</id>
+  <author>
+    <name><![CDATA[Ronan Gibney]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Windows Azure Table Explorer]]></title>
+    <link href="http://www.brewingcode.com/blog/2013/08/10/windows-azure-table-explorer/"/>
+    <updated>2013-08-10T09:04:00+01:00</updated>
+    <id>http://www.brewingcode.com/blog/2013/08/10/windows-azure-table-explorer</id>
+    <content type="html"><![CDATA[<p>This morning I was reading back over the archives of Jeff Wilcox&#8217;s blog and came across <a href="http://www.jeff.wilcox.name/2013/04/windows-azure-table-explorer/">this post</a> detailing a Single Page App that he built for browsing table service data on an Azure storage account.</p>
+
+<p>As I&#8217;ve been learning <a href="http://emberjs.com/">Ember</a> I thought it would be fun to take the jQuery front end and replace it with Ember.</p>
+
+<!--more-->
+
+
+<h3>Overview</h3>
+
+<p>So first thing I&#8217;ll just do a quick run through Jeff&#8217;s application as it stands (you can find the GitHub repo <a href="https://github.com/jeffwilcox/azure-table-explorer">here</a>).</p>
+
+<p>The application is up and running on Azure websites here <a href="https://waztable.azurewebsites.net/">https://waztable.azurewebsites.net/</a> and allows you to browse the Table Service data for a particular Storage Account.</p>
+
+<p>Jeff is using the <a href="https://github.com/WindowsAzure/azure-sdk-for-node">Windows Azure SDK for Node</a> to build a simple API in Node for his client side app. All requests to this API need to provide credentials which are the storage account name and access key, invalid credentials are rejected with a HTTP 401 error.</p>
+
+<p><code>GET /json/table/?account={storage-account}&amp;key={storage-key}</code> - returns a list of tables defined on the storage account.</p>
+
+<figure class='code'><figcaption><span>Response</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='json'><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="nt">&quot;ok&quot;</span><span class="p">:</span><span class="kc">true</span><span class="p">,</span>
+</span><span class='line'>  <span class="nt">&quot;result&quot;</span><span class="p">:{</span>
+</span><span class='line'>    <span class="nt">&quot;tables&quot;</span><span class="p">:[</span><span class="s2">&quot;logs&quot;</span><span class="p">,</span><span class="s2">&quot;people&quot;</span><span class="p">],</span>
+</span><span class='line'>    <span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="s2">&quot;brewingcode&quot;</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>GET /json/table/{table-name}?account={storage-account}&amp;key={storage-key}&amp;top={results-per-page}&amp;nextPartitionKey={partition-key}&amp;nextRowKey={row-key}</code> - returns a number of records specified by the <code>top</code> parameter for the specified table. If more records are available a continuation token will also be returned, this can the be used in subsequent requests to page through remaining records via the optional <code>nextPartitionKey</code> &amp; <code>nextRowKey</code> parameters.</p>
+
+<figure class='code'><figcaption><span>Response</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+</pre></td><td class='code'><pre><code class='json'><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="nt">&quot;ok&quot;</span><span class="p">:</span><span class="kc">true</span><span class="p">,</span>
+</span><span class='line'>  <span class="nt">&quot;table&quot;</span><span class="p">:{</span>
+</span><span class='line'>    <span class="nt">&quot;continuation&quot;</span><span class="p">:{</span><span class="nt">&quot;nextPartitionKey&quot;</span><span class="p">:</span><span class="s2">&quot;1!8!bG9ncw--&quot;</span><span class="p">,</span><span class="nt">&quot;nextRowKey&quot;</span><span class="p">:</span><span class="s2">&quot;1!4!Mjc-&quot;</span><span class="p">},</span>
+</span><span class='line'>    <span class="nt">&quot;rows&quot;</span><span class="p">:[</span>
+</span><span class='line'>      <span class="p">{</span>
+</span><span class='line'>        <span class="nt">&quot;_&quot;</span><span class="p">:{</span>
+</span><span class='line'>          <span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="s2">&quot;https://brewingcode.table.core.windows.net/logs(PartitionKey=&#39;logs&#39;,RowKey=&#39;18&#39;)&quot;</span><span class="p">,</span>
+</span><span class='line'>          <span class="nt">&quot;link&quot;</span><span class="p">:</span><span class="s2">&quot;logs(PartitionKey=&#39;logs&#39;,RowKey=&#39;18&#39;)&quot;</span><span class="p">,</span>
+</span><span class='line'>          <span class="nt">&quot;updated&quot;</span><span class="p">:</span><span class="s2">&quot;2013-12-05T15:26:07Z&quot;</span><span class="p">,</span>
+</span><span class='line'>          <span class="nt">&quot;etag&quot;</span><span class="p">:</span><span class="s2">&quot;W/\&quot;datetime&#39;2013-11-18T16%3A09%3A20.1183355Z&#39;\&quot;&quot;</span><span class="p">},</span>
+</span><span class='line'>          <span class="nt">&quot;PartitionKey&quot;</span><span class="p">:</span><span class="s2">&quot;logs&quot;</span><span class="p">,</span>
+</span><span class='line'>          <span class="nt">&quot;RowKey&quot;</span><span class="p">:</span><span class="s2">&quot;18&quot;</span><span class="p">,</span>
+</span><span class='line'>          <span class="nt">&quot;Timestamp&quot;</span><span class="p">:</span><span class="s2">&quot;2013-11-18T16:09:20.118Z&quot;</span><span class="p">,</span>
+</span><span class='line'>          <span class="nt">&quot;Level&quot;</span><span class="p">:</span><span class="s2">&quot;info&quot;</span><span class="p">,</span>
+</span><span class='line'>          <span class="nt">&quot;Message&quot;</span><span class="p">:</span><span class="s2">&quot;Message - 18&quot;</span>
+</span><span class='line'>        <span class="p">},</span>
+</span><span class='line'>        <span class="err">//</span> <span class="err">...</span>
+</span><span class='line'>    <span class="p">]</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>DELETE /json/table/{table-name}/{partition-key}/{row-key}?account={storage-account}&amp;key={storage-key}</code> - deletes the specified row from the table.</p>
+
+<figure class='code'><figcaption><span>Response</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='json'><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="nt">&quot;ok&quot;</span><span class="p">:</span><span class="kc">true</span><span class="p">,</span>
+</span><span class='line'>  <span class="nt">&quot;response&quot;</span><span class="p">:{</span>
+</span><span class='line'>    <span class="nt">&quot;isSuccessful&quot;</span><span class="p">:</span><span class="kc">true</span><span class="p">,</span>
+</span><span class='line'>    <span class="nt">&quot;statusCode&quot;</span><span class="p">:</span><span class="mi">204</span><span class="p">,</span>
+</span><span class='line'>    <span class="nt">&quot;headers&quot;</span><span class="p">:{</span>
+</span><span class='line'>      <span class="err">//</span> <span class="err">...</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Front end</h2>
+
+<p>The UI itself is very simple and consists of the following pages.</p>
+
+<p>First we have the login/credentials page where you enter your storage account name and access key.</p>
+
+<p><img src="http://www.brewingcode.com/images/posts/2013-08-06-windows-azure-table-explorer/credentials-page.png" alt="Credentials page" /></p>
+
+<p>If you&#8217;ve provided valid credentials then you&#8217;ll see a listing of all the tables defined in the specified storage account.</p>
+
+<p><img src="http://www.brewingcode.com/images/posts/2013-08-06-windows-azure-table-explorer/storage-account-tables.png" alt="Storage Account table listing" /></p>
+
+<p>Finally you can then select and view table data as seen below. Multiple rows can be selected which activates a master/detail view and the option to delete the selection items as seen in the 2nd screen shot.</p>
+
+<p><img src="http://www.brewingcode.com/images/posts/2013-08-06-windows-azure-table-explorer/table-listing.png" alt="Storage Account table listing" /></p>
+
+<p><img src="http://www.brewingcode.com/images/posts/2013-08-06-windows-azure-table-explorer/table-list-with-selected-items.png" alt="Storage Account table listing with multiple items selected" /></p>
+
+<h2>Ember Tooling</h2>
+
+<p>Before we get into converting this into Ember we need to talk a little about tooling. If you&#8217;re building an application with Ember then you&#8217;re going to need to have some kind of tooling/build process in place. At the moment I like to use <a href="http://yeoman.io">Yeoman</a> for this.</p>
+
+<p>For those of you have haven&#8217;t heard of it before Yeoman is a collection of <a href="http://gruntjs.com/">Grunt</a> build scripts, <a href="https://github.com/yeoman/yo">scaffolding tools</a>, Twitters <a href="http://bower.io/">Bower</a> package manager and a bunch of opinion.</p>
+
+<p>On Windows assuming you have <a href="http://chocolatey.org/">Chocolatey</a> installed (and if not why not?) then getting Yeoman installed is as simple as&#8230;</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='powershell'><span class='line'><span class="n">cinst</span> <span class="n">Yeoman</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>With Yeoman installed next we&#8217;ll want to add the scaffolding support for the Ember tools.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='powershell'><span class='line'><span class="n">npm</span> <span class="n">install</span> <span class="n">-g</span> <span class="n">generator-ember</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>With that we&#8217;ll create a directory for our app and use the Yeoman scaffolding tools for Ember to create a basic structure.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='powershell'><span class='line'><span class="n">mkdir</span> <span class="n">emberapp</span>
+</span><span class='line'><span class="n">cd</span> <span class="n">emberapp</span>
+</span><span class='line'><span class="n">yo</span> <span class="n">ember</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This will create the directory structure seen below.</p>
+
+<p><img src="http://www.brewingcode.com/images/posts/2013-08-06-windows-azure-table-explorer/yeoman-directory-structure.png" alt="Yeoman directory structure" /></p>
+
+<p>The files/directories in the root directory to call out are.</p>
+
+<ul>
+<li><code>bower.json</code> - a list of packages from Bower that we are using in our app.</li>
+<li><code>Grunt.js</code> - the Grunt file contains the build scripts for our application, specifically we&#8217;ll be using the following commands.
+
+<ul>
+<li><code>grunt server</code> - runs your application in preview mode at <code>http://localhost:4000</code>. The file system is monitored for changes and the application is re-built as required.</li>
+<li><code>grunt test</code> - runs your application unit tests inside <a href="http://phantomjs.org">PhantomJS</a></li>
+<li><code>grunt</code> - builds the application in release mode and ready for deployment, the output of this task is created in the <code>dist</code> directory.</li>
+</ul>
+</li>
+<li><code>packages.json</code> - a list of the npm packages required by Yeoman.</li>
+<li><code>.\app</code> - contains the source code for the Ember application.</li>
+<li><code>.\dist</code> - when the application is built in release mode the output of the task will be copied to this directory.</li>
+<li><code>.\test</code> - contains your unit tests for the application.</li>
+</ul>
+
+
+<p>Before we use <code>npm install</code> to get all the required node modules for our application we need to make a small alternation to the <code>packages.json</code> that was just created the <code>emberapp</code> directory. There is problem with the <code>grunt-contrib-imagemin</code> module on Windows. It depends on <code>jpegtran-bin</code> and the latest version of this can&#8217;t be built from source on Windows and thus installed via npm. Instead we can specify the previous version in the <code>package.json</code>, this should be above <code>grunt-contrib-imagemin</code>.</p>
+
+<figure class='code'><figcaption><span>packages.json</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='json'><span class='line'><span class="err">//</span> <span class="err">...</span>
+</span><span class='line'><span class="s2">&quot;jpegtran-bin&quot;</span><span class="err">:</span> <span class="s2">&quot;0.2.0&quot;</span><span class="err">,</span>
+</span><span class='line'><span class="s2">&quot;grunt-contrib-imagemin&quot;</span><span class="err">:</span> <span class="s2">&quot;~0.2.0&quot;</span><span class="err">,</span>
+</span><span class='line'><span class="err">//</span> <span class="err">...</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>With this alteration in place you can go ahead and run <code>npm install</code> to get all the required dependencies.</p>
+
+<p>So at this point we will have the basic structure of our Ember app scaffolded out and everything is ready to be built and run. We can boot the app with the <code>grunt server</code> command, this will run the app on <code>http://localhost:4000</code>.</p>
+
+<h3>Ember Concepts</h3>
+
+<p>Now we are ready to start building out the app however before that I&#8217;ll just do a super quick run down through the main components in Ember.</p>
+
+<ul>
+<li><code>Router</code> - Used to define routes for your application. In Ember URLs contain the state required for the Router to create a corresponding set of Controllers, Routes &amp; Templates that are needed to restore the app to the point defined by the URL.</li>
+<li><code>Routes</code> - a Route is responsible for loading a model and rendering a template into an outlet.</li>
+<li><code>Model</code> - a Model holds data that is persisted on the server, in our case Models will be created from the JSON returned by the API defined at the top of the post.</li>
+<li><code>Controller</code> - a Controller proxies it&#8217;s related model and can be used to add any UI specific properties or functionality required. Coming from a XAML background I like to think of Ember Controllers as what we would call a ViewModel in XAML world.</li>
+<li><code>Template</code> - Ember uses the <a href="http://handlebarsjs.com/">Handlebars</a> templating language. A Template is bound to a Controller and is responsible for rendering UI for a specific portion of the page which is known as an Outlet. Templates can also contain Outlets so you can easily build your UI with multiple templates nested within each other.</li>
+<li><code>View</code> - in Ember Views are used when you need more control over exactly how the DOM is manipulated, typically they are quite useful when integrating with other libraries such as jQuery plugins.</li>
+</ul>
+
+
+<p>Finally we&#8217;ll have a quick look at the <code>.\app</code> directory which contains the source for our Ember application.</p>
+
+<p><img src="http://www.brewingcode.com/images/posts/2013-08-06-windows-azure-table-explorer/ember-app-structure.png" alt="Ember application directory structure" /></p>
+
+<ul>
+<li><code>.\bower_components</code> - packages referenced in bower.json are stored in this directory.</li>
+<li><code>.\img</code> - We&#8217;re using Bootstrap so this directory contains some glyphicon image files.</li>
+<li><code>.\scripts</code> - the JavaScript source. In the root we have a file app.js which is the application entry point, after that we have separate sub-directories for our various Ember components e.g. controllers, models, routes &amp; views.</li>
+<li><code>.\styles</code> - contains the SASS source used to produce our CSS.</li>
+<li><code>.\templates</code> - Handlebars templates</li>
+<li><code>index.html</code> - the container for our Ember application.</li>
+</ul>
+
+
+<p>An excerpt of the index.html file is listed below, the important parts are the <code>build:js</code> snippets. Yeoman uses these markers to insert Bower libraries, Handlebars templates and the application source itself. Depending on the grunt task executed what&#8217;s injected into these placeholders will be different, for example when running <code>grunt</code> the application is built in release mode and so files are concatenated, minified &amp; uglified.</p>
+
+<figure class='code'><figcaption><span>index.html</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="cp">&lt;!DOCTYPE html&gt;</span>
+</span><span class='line'>    // ...
+</span><span class='line'>    <span class="nt">&lt;body&gt;</span>
+</span><span class='line'>        <span class="c">&lt;!-- build:js scripts/components.js --&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;script </span><span class="na">src=</span><span class="s">&quot;bower_components/jquery/jquery.js&quot;</span><span class="nt">&gt;&lt;/script&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;script </span><span class="na">src=</span><span class="s">&quot;bower_components/momentjs/moment.js&quot;</span><span class="nt">&gt;&lt;/script&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;script </span><span class="na">src=</span><span class="s">&quot;bower_components/underscore/underscore.js&quot;</span><span class="nt">&gt;&lt;/script&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;script </span><span class="na">src=</span><span class="s">&quot;bower_components/handlebars/handlebars.runtime.js&quot;</span><span class="nt">&gt;&lt;/script&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;script </span><span class="na">src=</span><span class="s">&quot;bower_components/ember/ember.js&quot;</span><span class="nt">&gt;&lt;/script&gt;</span>
+</span><span class='line'>        <span class="c">&lt;!-- endbuild --&gt;</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="c">&lt;!-- build:js(.tmp) scripts/templates.js --&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;script </span><span class="na">src=</span><span class="s">&quot;scripts/compiled-templates.js&quot;</span><span class="nt">&gt;&lt;/script&gt;</span>
+</span><span class='line'>        <span class="c">&lt;!-- endbuild --&gt;</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="c">&lt;!-- build:js(.tmp) scripts/main.js --&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;script </span><span class="na">src=</span><span class="s">&quot;scripts/combined-scripts.js&quot;</span><span class="nt">&gt;&lt;/script&gt;</span>
+</span><span class='line'>        <span class="c">&lt;!-- endbuild --&gt;</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="c">&lt;!-- build:js scripts/plugins.js --&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;script </span><span class="na">src=</span><span class="s">&quot;bower_components/bootstrap-sass/js/bootstrap-affix.js&quot;</span><span class="nt">&gt;&lt;/script&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;script </span><span class="na">src=</span><span class="s">&quot;bower_components/bootstrap-sass/js/bootstrap-alert.js&quot;</span><span class="nt">&gt;&lt;/script&gt;</span>
+</span><span class='line'>        // ...
+</span><span class='line'>        <span class="c">&lt;!-- endbuild --&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;/body&gt;</span>
+</span><span class='line'><span class="nt">&lt;/html&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Replacing jQuery with Ember</h2>
+
+<p>The first thing you want to do when starting an Ember app is to get your routes defined. Below are the route definitions for the app, I&#8217;ve also included comments for routes that Ember will create by itself. Ember is a very convention based framework and in particular route names are important as these are used in the controller, model, route &amp; template naming conventions.</p>
+
+<figure class='code'><figcaption><span>Application Routes</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="nx">App</span><span class="p">.</span><span class="nx">Router</span><span class="p">.</span><span class="nx">map</span><span class="p">(</span><span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1">// application</span>
+</span><span class='line'>  <span class="c1">// index</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">this</span><span class="p">.</span><span class="nx">resource</span><span class="p">(</span><span class="s2">&quot;tables&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="c1">// tables.index</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">this</span><span class="p">.</span><span class="nx">resource</span><span class="p">(</span><span class="s2">&quot;table&quot;</span><span class="p">,</span> <span class="p">{</span> <span class="nx">path</span><span class="o">:</span> <span class="s2">&quot;:table_id&quot;</span> <span class="p">},</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>      <span class="c1">// table.index</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="k">this</span><span class="p">.</span><span class="nx">route</span><span class="p">(</span><span class="s2">&quot;page&quot;</span><span class="p">,</span> <span class="p">{</span> <span class="nx">path</span><span class="o">:</span> <span class="s2">&quot;:page_id&quot;</span> <span class="p">}</span> <span class="p">);</span>
+</span><span class='line'>    <span class="p">});</span>
+</span><span class='line'>  <span class="p">});</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">});</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>With these routes defined we can start fleshing out the templates and layout of our application. The <code>application.hbs</code> template will be rendered by Ember when your application starts so it&#8217;s the place to define your page layout structure. The header and footer sections have been created as separate template fragments <code><em>header.hbs</code> and <code></em>footer.hbs</code> and are included using the <code>{{partial "{template-name}"}}</code> helper. Note that partial templates must always be named with an underscore prefix however this prefix is excluded when using the partial helper. e.g. A partial template <code>_header.hbs</code> is included in a template using <code>{{partial "header"}}</code>. Also the binding context of the partial is not changed, the fragment is just treated as if it were inline with the main template.</p>
+
+<p>Along with partials we also have two outlets defined in this template. Outlets are just placeholders that other templates can be rendered into. Templates can have a single default outlet which is not given a name, if a template has multiple outlets then the non-default items must be allocated unique names. In this case we have a separate outlet for modal dialogs which will be covered later in the post.</p>
+
+<figure class='code'><figcaption><span>application.hbs</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'>{{partial &quot;header&quot;}}
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&quot;container&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>
+</span><span class='line'>  {{outlet}}
+</span><span class='line'>
+</span><span class='line'>  <span class="nt">&lt;hr/&gt;</span>
+</span><span class='line'>
+</span><span class='line'>  {{partial &quot;footer&quot;}}
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;/div&gt;</span>
+</span><span class='line'>{{outlet &quot;modalOutlet&quot;}}
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The next default template that Ember will render is the <code>index.hbs</code> template. As we want the landing page of our application to be the credentials/login screen we will create an <code>IndexController</code> that will be bound to this template and control the credentials/login process.</p>
+
+<figure class='code'><figcaption><span>IndexController.js</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="nx">App</span><span class="p">.</span><span class="nx">IndexController</span> <span class="o">=</span> <span class="nx">Ember</span><span class="p">.</span><span class="nx">ObjectController</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+</span><span class='line'>  <span class="nx">storageAccount</span><span class="o">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+</span><span class='line'>  <span class="nx">storageKey</span><span class="o">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+</span><span class='line'>  <span class="nx">attemptedTransition</span><span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+</span><span class='line'>  <span class="nx">credentials</span><span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+</span><span class='line'>  
+</span><span class='line'>  <span class="nx">usingSSL</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>      <span class="k">return</span> <span class="p">(</span><span class="nb">document</span><span class="p">.</span><span class="nx">location</span><span class="p">.</span><span class="nx">protocol</span> <span class="o">===</span> <span class="s2">&quot;https:&quot;</span><span class="p">);</span>
+</span><span class='line'>  <span class="p">}.</span><span class="nx">property</span><span class="p">(),</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">loginDisabled</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>      <span class="kd">var</span> <span class="nx">credentials</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">getProperties</span><span class="p">(</span><span class="s2">&quot;storageAccount&quot;</span><span class="p">,</span> <span class="s2">&quot;storageKey&quot;</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="k">if</span> <span class="p">(</span><span class="nx">credentials</span><span class="p">.</span><span class="nx">storageAccount</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="nx">credentials</span><span class="p">.</span><span class="nx">storageKey</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>          <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+</span><span class='line'>      <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="k">return</span> <span class="kc">true</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="p">}.</span><span class="nx">property</span><span class="p">(</span><span class="s2">&quot;storageAccount&quot;</span><span class="p">,</span> <span class="s2">&quot;storageKey&quot;</span><span class="p">),</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">login</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>      <span class="kd">var</span> <span class="nx">self</span> <span class="o">=</span> <span class="k">this</span><span class="p">,</span>
+</span><span class='line'>          <span class="nx">credentials</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">getProperties</span><span class="p">(</span><span class="s2">&quot;storageAccount&quot;</span><span class="p">,</span> <span class="s2">&quot;storageKey&quot;</span><span class="p">),</span>
+</span><span class='line'>          <span class="nx">attemptedTransition</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;attemptedTransition&quot;</span><span class="p">),</span>
+</span><span class='line'>          <span class="nx">tables</span> <span class="o">=</span> <span class="nx">App</span><span class="p">.</span><span class="nx">Tables</span><span class="p">.</span><span class="nx">find</span><span class="p">(</span><span class="nx">credentials</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="nx">tables</span><span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">data</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>          <span class="c1">// success</span>
+</span><span class='line'>          <span class="nx">self</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s2">&quot;credentials&quot;</span><span class="p">,</span> <span class="nx">credentials</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>          <span class="k">if</span> <span class="p">(</span><span class="nx">attemptedTransition</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>              <span class="nx">attemptedTransition</span><span class="p">.</span><span class="nx">retry</span><span class="p">();</span>
+</span><span class='line'>              <span class="nx">self</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s2">&quot;attemptedTransition&quot;</span><span class="p">,</span> <span class="kc">null</span><span class="p">);</span>
+</span><span class='line'>          <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+</span><span class='line'>              <span class="nx">self</span><span class="p">.</span><span class="nx">transitionToRoute</span><span class="p">(</span><span class="s2">&quot;tables.index&quot;</span><span class="p">);</span>
+</span><span class='line'>          <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="p">},</span> <span class="kd">function</span><span class="p">(</span><span class="nx">reason</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>          <span class="c1">// failure</span>
+</span><span class='line'>          <span class="nx">self</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s2">&quot;credentials&quot;</span><span class="p">,</span> <span class="kc">null</span><span class="p">);</span>
+</span><span class='line'>          <span class="nx">self</span><span class="p">.</span><span class="nx">send</span><span class="p">(</span><span class="s2">&quot;error&quot;</span><span class="p">,</span> <span class="nx">reason</span><span class="p">);</span>
+</span><span class='line'>      <span class="p">});</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="p">});</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li><code>storageAccount</code> - bound to the corresponding input element in the template.</li>
+<li><code>storageKey</code> - as above.</li>
+<li><code>attemptedTransition</code> - route transitions can be cancelled if the application doesn&#8217;t have valid credentials. If this is the case the application will redirect back to the index route and store the originally attempted route transition here. If the credentials/login is successful we can then retry the original transition and return the app to the requested URL.</li>
+<li><code>credentials</code> - If the supplied <code>storageAccount</code> and <code>storageKey</code> are valid then these credentials will be stored here and used for subsequent API requests throughout the app.</li>
+<li><code>usingSSL</code> - true/false depending on whether the page is using SSL. This is used to toggle the warning message within the template that is displayed if the page is not using SSL.</li>
+<li><code>loginDisabled</code> - toggles whether the &#8220;Explore&#8221; button is enabled/disabled. This is a computed field and is dependent on the <code>storageAccount</code> &amp; <code>storageKey</code> fields, if either field is empty then the button is disabled.</li>
+<li><code>login</code> - handles the click action of the &#8220;Explore&#8221; button. This action will use the method <code>App.Tables.find</code> passing the credentials entered by the user, this returns a promise &amp; when it resolves successfully we will store the credentials and redirect to the appropriate route. If the promise resolves with an error then credentials are cleared and we send an error message. This will eventually bubble up to the <code>ApplicationRoute</code> which will in turn trigger a modal dialog to display an error message.</li>
+</ul>
+
+
+<p>Below is the template that will be bound to the <code>IndexController</code>. What we are doing here is binding some CSS classes to corresponding properties on the controller using the <code>{{bindAttr}}</code> helper. This helper can be used to bind any element attribute to a corresponding property on the controller.</p>
+
+<p>We then use the <code>Ember.TextField</code> view to create a text and password type input fields and bind them to the storageAccount and storageKey fields on the controller.</p>
+
+<p>Finally the click action on the &#8220;Explore&#8221; button is set to be handled by the <code>login</code> function on our controller.</p>
+
+<figure class='code'><figcaption><span>index.hbs</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;div</span> <span class="na">id=</span><span class="s">&quot;credentials&quot;</span> <span class="na">class=</span><span class="s">&quot;hero-unit&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;h1&gt;</span>Explore a storage account<span class="nt">&lt;/h1&gt;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nt">&lt;div</span> <span class="na">id=</span><span class="s">&quot;nossl&quot;</span> <span class="err">{{</span><span class="na">bindAttr</span> <span class="na">class=</span><span class="s">&quot;:alert :alert-block usingSSL:hide:show&quot;</span><span class="err">}}</span><span class="nt">&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;h4&gt;</span>Security Warning!<span class="nt">&lt;/h4&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;p&gt;</span>You are not currently browsing this site through an encrypted SSL session. If you submit your
+</span><span class='line'>    Windows Azure storage account name and access key, this information will be sent over the
+</span><span class='line'>    wire unencrypted. Don&#39;t do it. Please.<span class="nt">&lt;/p&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;/div&gt;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nt">&lt;p</span> <span class="na">id=</span><span class="s">&quot;ssl&quot;</span> <span class="err">{{</span><span class="na">bindAttr</span> <span class="na">class=</span><span class="s">&quot;usingSSL:show:hide&quot;</span><span class="err">}}</span><span class="nt">&gt;</span>
+</span><span class='line'>    You&#39;re using an SSL connection with this cloud service - your credentials will be transmitted securely. The credentials are sent with every dynamic request and immediately destroyed.
+</span><span class='line'>  <span class="nt">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nt">&lt;p&gt;</span>
+</span><span class='line'>    {{view Ember.TextField valueBinding=&quot;storageAccount&quot; placeholder=&quot;Storage account&quot; class=&quot;span5&quot;}}
+</span><span class='line'>  <span class="nt">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&quot;input-prepend&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">&quot;add-on&quot;</span><span class="nt">&gt;&lt;i</span> <span class="na">class=</span><span class="s">&quot;icon-lock&quot;</span><span class="nt">&gt;&lt;/i&gt;&lt;/span&gt;</span>
+</span><span class='line'>    {{view Ember.TextField valueBinding=&quot;storageKey&quot; placeholder=&quot;Access account&quot; type=&quot;password&quot; class=&quot;span5&quot;}}
+</span><span class='line'>  <span class="nt">&lt;/div&gt;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nt">&lt;p&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;button</span> <span class="na">class=</span><span class="s">&quot;btn btn-primary&quot;</span> <span class="err">{{</span><span class="na">action</span> <span class="na">login</span><span class="err">}}</span> <span class="err">{{</span><span class="na">bindAttr</span> <span class="na">disabled=</span><span class="s">&quot;loginDisabled&quot;</span><span class="err">}}</span> <span class="na">id=</span><span class="s">&quot;setCredentials&quot;</span><span class="nt">&gt;</span>Explore <span class="ni">&amp;raquo;</span><span class="nt">&lt;/button&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;a</span> <span class="na">href=</span><span class="s">&quot;https://github.com/jeffwilcox/azure-table-explorer&quot;</span> <span class="na">class=</span><span class="s">&quot;btn&quot;</span> <span class="na">target=</span><span class="s">&quot;_blank&quot;</span><span class="nt">&gt;</span>App source <span class="ni">&amp;raquo;</span><span class="nt">&lt;/a&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;/p&gt;</span>
+</span><span class='line'><span class="nt">&lt;/div&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>Models</h4>
+
+<p>In order to build out the rest of the application we&#8217;ll need to go ahead and create the various models that we will need we are..</p>
+
+<ul>
+<li><code>Tables</code> - storage account details and a list of associated tables.</li>
+<li><code>Table</code> - table id and a list of continuation tokens that are required for pagination.</li>
+<li><code>Page</code> - A set of rows for a particular table.</li>
+<li><code>Row</code> - A individual table record.</li>
+</ul>
+
+
+<p>As we are not using Ember Data we&#8217;ll just extend <code>Ember.Object</code> when creating our models. The <code>Ember.Object.extend</code> method is used to define properties for each model, once defined an instance of the <code>Tables</code> model can be created using the <code>App.Tables.create</code> method. The <code>reopenClass</code> method can be used to add static properties and methods to the model.</p>
+
+<figure class='code'><figcaption><span>Tables.js</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="nx">App</span><span class="p">.</span><span class="nx">Tables</span> <span class="o">=</span> <span class="nx">Ember</span><span class="p">.</span><span class="nb">Object</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+</span><span class='line'>  <span class="nx">id</span><span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+</span><span class='line'>  <span class="nx">tables</span><span class="o">:</span> <span class="kc">null</span>
+</span><span class='line'><span class="p">});</span>
+</span><span class='line'>
+</span><span class='line'><span class="nx">App</span><span class="p">.</span><span class="nx">Tables</span><span class="p">.</span><span class="nx">reopenClass</span><span class="p">({</span>
+</span><span class='line'>  <span class="nx">find</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">credentials</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">requestData</span> <span class="o">=</span> <span class="p">{</span>
+</span><span class='line'>      <span class="nx">account</span><span class="o">:</span> <span class="nx">credentials</span><span class="p">.</span><span class="nx">storageKey</span> <span class="o">?</span> <span class="nx">credentials</span><span class="p">.</span><span class="nx">storageAccount</span> <span class="o">:</span> <span class="kc">undefined</span><span class="p">,</span>
+</span><span class='line'>      <span class="nx">key</span><span class="o">:</span> <span class="nx">credentials</span><span class="p">.</span><span class="nx">storageKey</span><span class="p">,</span>
+</span><span class='line'>      <span class="nx">top</span><span class="o">:</span> <span class="mi">10</span>
+</span><span class='line'>    <span class="p">};</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">return</span> <span class="nx">Ember</span><span class="p">.</span><span class="nx">RSVP</span><span class="p">.</span><span class="nx">Promise</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">resolve</span><span class="p">,</span> <span class="nx">reject</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="nx">App</span><span class="p">.</span><span class="nx">ajax</span><span class="p">(</span><span class="s2">&quot;/json/table&quot;</span><span class="p">,</span> <span class="p">{</span><span class="nx">data</span><span class="o">:</span> <span class="nx">requestData</span><span class="p">}).</span><span class="nx">then</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">value</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>          <span class="c1">// success</span>
+</span><span class='line'>          <span class="nx">resolve</span><span class="p">(</span>
+</span><span class='line'>            <span class="nx">App</span><span class="p">.</span><span class="nx">Tables</span><span class="p">.</span><span class="nx">create</span><span class="p">({</span>
+</span><span class='line'>              <span class="nx">id</span><span class="o">:</span> <span class="nx">value</span><span class="p">.</span><span class="nx">result</span><span class="p">.</span><span class="nx">name</span><span class="p">,</span>
+</span><span class='line'>              <span class="nx">tables</span><span class="o">:</span> <span class="nx">_</span><span class="p">.</span><span class="nx">map</span><span class="p">(</span><span class="nx">value</span><span class="p">.</span><span class="nx">result</span><span class="p">.</span><span class="nx">tables</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">item</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>                <span class="k">return</span> <span class="nx">App</span><span class="p">.</span><span class="nx">Table</span><span class="p">.</span><span class="nx">create</span><span class="p">({</span><span class="nx">id</span><span class="o">:</span> <span class="nx">item</span><span class="p">});</span>
+</span><span class='line'>              <span class="p">})</span>
+</span><span class='line'>            <span class="p">})</span>
+</span><span class='line'>          <span class="p">);</span>
+</span><span class='line'>        <span class="p">},</span> <span class="kd">function</span><span class="p">(</span><span class="nx">error</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>          <span class="c1">// fail</span>
+</span><span class='line'>          <span class="nx">reject</span><span class="p">(</span><span class="nx">error</span><span class="p">);</span>
+</span><span class='line'>        <span class="p">});</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="p">});</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="p">});</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li><code>id</code> - the storage account name.</li>
+<li><code>tables</code> - a list of <code>App.Table</code> objects.</li>
+<li><code>find</code> - uses an internal Ajax helper to make the API request, this helper returns a promise. The <code>find</code> method itself returns a promise that wraps that returned by the ajax helper, when the ajax promise resolves the JSON response is unpacked and converted into an <code>App.Tables</code> instance.</li>
+</ul>
+
+
+<figure class='code'><figcaption><span>Table.js</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="nx">App</span><span class="p">.</span><span class="nx">Table</span> <span class="o">=</span> <span class="nx">Ember</span><span class="p">.</span><span class="nb">Object</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+</span><span class='line'>  <span class="nx">id</span><span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+</span><span class='line'>  <span class="nx">continuationTokens</span><span class="o">:</span> <span class="kc">null</span>
+</span><span class='line'><span class="p">});</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li><code>id</code> - the table name, this is unique within the storage account.</li>
+<li><code>continuationTokens</code> - a list of continuation tokens that are required for pagination. This will be covered in more detail later in the post.</li>
+</ul>
+
+
+<figure class='code'><figcaption><span>Page.js</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="nx">App</span><span class="p">.</span><span class="nx">Page</span> <span class="o">=</span> <span class="nx">Ember</span><span class="p">.</span><span class="nb">Object</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+</span><span class='line'>  <span class="nx">id</span><span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+</span><span class='line'>  <span class="nx">continuation</span><span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+</span><span class='line'>  <span class="nx">rows</span><span class="o">:</span> <span class="kc">null</span>
+</span><span class='line'><span class="p">});</span>
+</span><span class='line'>
+</span><span class='line'><span class="nx">App</span><span class="p">.</span><span class="nx">Page</span><span class="p">.</span><span class="nx">reopenClass</span><span class="p">({</span>
+</span><span class='line'>  <span class="nx">find</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">tableName</span><span class="p">,</span> <span class="nx">credentials</span><span class="p">,</span> <span class="nx">pageId</span><span class="p">,</span> <span class="nx">continuation</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">partitionKey</span><span class="p">,</span>
+</span><span class='line'>      <span class="nx">requestData</span> <span class="o">=</span> <span class="p">{</span>
+</span><span class='line'>      <span class="nx">account</span><span class="o">:</span> <span class="nx">credentials</span><span class="p">.</span><span class="nx">storageKey</span> <span class="o">?</span> <span class="nx">credentials</span><span class="p">.</span><span class="nx">storageAccount</span> <span class="o">:</span> <span class="kc">undefined</span><span class="p">,</span>
+</span><span class='line'>      <span class="nx">key</span><span class="o">:</span> <span class="nx">credentials</span><span class="p">.</span><span class="nx">storageKey</span><span class="p">,</span>
+</span><span class='line'>      <span class="nx">top</span><span class="o">:</span> <span class="mi">10</span>
+</span><span class='line'>    <span class="p">};</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1">// ...</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="p">});</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li><code>id</code> - the page number.</li>
+<li><code>continuation</code> - if more results are available after the current page then this will contain the continuation token returned by Azure.</li>
+<li><code>rows</code> - a list of <code>App.Row</code> instances that make up the page results.</li>
+<li><code>find</code> - as with <code>App.Tables.find</code> this returns a promise that will eventually resolve to return an instance of an <code>App.Page</code> model.</li>
+</ul>
+
+
+<figure class='code'><figcaption><span>Row.js</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="nx">App</span><span class="p">.</span><span class="nx">Row</span> <span class="o">=</span> <span class="nx">Ember</span><span class="p">.</span><span class="nb">Object</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+</span><span class='line'>  <span class="nx">id</span><span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+</span><span class='line'>  <span class="nx">PartitionKey</span><span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+</span><span class='line'>  <span class="nx">RowKey</span><span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+</span><span class='line'>  <span class="nx">isSelected</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>
+</span><span class='line'>  <span class="nx">partitionKeyChanged</span><span class="o">:</span> <span class="kc">false</span>
+</span><span class='line'><span class="p">});</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li><code>id</code> - a unique id for the row, this is a combination of the <code>PartitionKey</code> &amp; <code>RowKey</code>.</li>
+<li><code>PartitionKey</code> - the Azure table service partition key.</li>
+<li><code>RowKey</code> - the Azure table service row key.</li>
+<li><code>isSelected</code> - this probably shouldn&#8217;t be a property on the model, it&#8217;s used to toggle the selection status of rows within the table.</li>
+<li><code>partitionKeyChanged</code> - as above this property is used when rendering the table, when the partition key is different from the previous row a new partition key header is rendered.</li>
+</ul>
+
+
+<h4>Authentication</h4>
+
+<p>In order to use the application a valid set of credentials needs to be defined. Outside of the login/landing page none of the other routes should be accessible without valid credentials, instead we just want to redirect back to the login page. If valid credentials are subsequently entered we can then redirect back to the original route that was requested.</p>
+
+<p>This is easy to do in Ember, what we can do is define an <code>AuthenticatedRoute</code> as seen below and have all the routes that require credentials extend from this.</p>
+
+<p>We can use the <code>beforeModel</code> hook on the route which allows us to cancel the current route transition and redirect elsewhere. In the <code>_redirectToLogin</code> function we grab an instance of the <code>index</code> controller and then set the currently attempted route transition before redirecting the index route itself. This allows us to redirect back to the original requested route if needed.</p>
+
+<p>Finally we can use the <code>events</code> hash to define an event handler for any errors that bubble up to the route. The Node API will throw a HTTP 401 Unauthorized error for any requests with invalid credentials, in this case we can also just redirect back to the login page. For any other errors we will just re-throw the error which will eventually be handled by the <code>Application</code> route.</p>
+
+<figure class='code'><figcaption><span>AuthenticatedRoute.js</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="nx">App</span><span class="p">.</span><span class="nx">AuthenticatedRoute</span> <span class="o">=</span> <span class="nx">Ember</span><span class="p">.</span><span class="nx">Route</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+</span><span class='line'>  <span class="nx">credentials</span><span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">_redirectToLogin</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">transition</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>      <span class="kd">var</span> <span class="nx">indexController</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">controllerFor</span><span class="p">(</span><span class="s2">&quot;index&quot;</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="nx">indexController</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s2">&quot;attemptedTransition&quot;</span><span class="p">,</span> <span class="nx">transition</span><span class="p">);</span>
+</span><span class='line'>      <span class="k">this</span><span class="p">.</span><span class="nx">transitionTo</span><span class="p">(</span><span class="s2">&quot;index&quot;</span><span class="p">);</span>
+</span><span class='line'>  <span class="p">},</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">beforeModel</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">transition</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>      <span class="kd">var</span> <span class="nx">credentials</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">controllerFor</span><span class="p">(</span><span class="s2">&quot;index&quot;</span><span class="p">).</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;credentials&quot;</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">credentials</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>          <span class="k">this</span><span class="p">.</span><span class="nx">_redirectToLogin</span><span class="p">(</span><span class="nx">transition</span><span class="p">);</span>
+</span><span class='line'>      <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+</span><span class='line'>          <span class="k">this</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s2">&quot;credentials&quot;</span><span class="p">,</span> <span class="nx">credentials</span><span class="p">);</span>
+</span><span class='line'>      <span class="p">}</span>
+</span><span class='line'>  <span class="p">},</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">events</span><span class="o">:</span> <span class="p">{</span>
+</span><span class='line'>      <span class="nx">error</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">reason</span><span class="p">,</span> <span class="nx">transition</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>          <span class="k">if</span> <span class="p">(</span><span class="nx">reason</span><span class="p">.</span><span class="nx">status</span> <span class="o">===</span> <span class="mi">401</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>              <span class="k">this</span><span class="p">.</span><span class="nx">_redirectToLogin</span><span class="p">(</span><span class="nx">transition</span><span class="p">);</span>
+</span><span class='line'>          <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+</span><span class='line'>              <span class="k">throw</span> <span class="p">{</span><span class="nx">error</span><span class="o">:</span> <span class="nx">reason</span><span class="p">,</span> <span class="nx">transition</span><span class="o">:</span> <span class="nx">transition</span><span class="p">};</span>
+</span><span class='line'>          <span class="p">}</span>
+</span><span class='line'>      <span class="p">}</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="p">});</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><figcaption><span>ApplicationRoute.js</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="nx">App</span><span class="p">.</span><span class="nx">ApplicationRoute</span> <span class="o">=</span> <span class="nx">Ember</span><span class="p">.</span><span class="nx">Route</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">events</span><span class="o">:</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nx">error</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">error</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>      <span class="kd">var</span> <span class="nx">errorController</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">router</span><span class="p">.</span><span class="nx">container</span><span class="p">.</span><span class="nx">lookup</span><span class="p">(</span><span class="s2">&quot;controller:error&quot;</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="nx">errorController</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s2">&quot;model&quot;</span><span class="p">,</span> <span class="nx">error</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="k">this</span><span class="p">.</span><span class="nx">render</span><span class="p">(</span><span class="s2">&quot;errorModal&quot;</span><span class="p">,</span> <span class="p">{</span>
+</span><span class='line'>        <span class="nx">into</span><span class="o">:</span> <span class="s2">&quot;application&quot;</span><span class="p">,</span>
+</span><span class='line'>        <span class="nx">outlet</span><span class="o">:</span> <span class="s2">&quot;modalOutlet&quot;</span><span class="p">,</span>
+</span><span class='line'>        <span class="nx">controller</span><span class="o">:</span> <span class="nx">errorController</span>
+</span><span class='line'>      <span class="p">});</span>
+</span><span class='line'>    <span class="p">},</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="nx">closeModal</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>      <span class="k">this</span><span class="p">.</span><span class="nx">render</span><span class="p">(</span><span class="s2">&quot;emptyTemplate&quot;</span><span class="p">,</span> <span class="p">{</span>
+</span><span class='line'>        <span class="nx">into</span><span class="o">:</span> <span class="s2">&quot;application&quot;</span><span class="p">,</span>
+</span><span class='line'>        <span class="nx">outlet</span><span class="o">:</span> <span class="s2">&quot;modalOutlet&quot;</span>
+</span><span class='line'>      <span class="p">});</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">});</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li><code>events</code> - in <code>ApplicationRoute</code> the <code>events</code> hash lets us define application wide handlers for certain items. For example in <code>BootstrapModalView</code> we trigger a <code>closeModal</code> event, this will then bubble up through the corresponding <code>Controller</code>, <code>Route</code> and finally <code>ApplicationRoute</code> until it is handled.</li>
+<li><code>error</code> - used to provide an application wide hook for any unhandled errors, once an error is caught a modal dialog is displayed.</li>
+<li><code>closeModal</code> - closes the currently opened modal dialog, to do this we just render an empty template into the modal outlet.</li>
+</ul>
+
+
+<h4>Modal Dialogs</h4>
+
+<p>We are using the Bootstrap modal dialog to display errors that occur in the application. When we want to use other libraries that manipulate the DOM we need to do a little bit of work to ensure that whatever we are using doesn&#8217;t step on Embers toes and interfere with its rendering.</p>
+
+<p>Typically what you&#8217;ll end up doing is creating a <code>View</code> which wraps the library/plugin you are using. A <code>View</code> contains two import hooks which are <code>didInsertElement</code> and <code>willDestroyElement</code>. From Embers perspective a <code>View</code> is represented by a single DOM element and after this has been inserted into the DOM it will call <code>didInsertElement</code>. We can use this hook to create an instance of the Bootstrap Modal dialog plugin, render it within our container DOM element and hook up any events to corresponding handlers within the view.</p>
+
+<figure class='code'><figcaption><span>BootstrapModalView.js</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="nx">App</span><span class="p">.</span><span class="nx">BootstrapModalView</span> <span class="o">=</span> <span class="nx">Ember</span><span class="p">.</span><span class="nx">View</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+</span><span class='line'>  <span class="nx">layoutName</span><span class="o">:</span> <span class="s2">&quot;modal_layout&quot;</span><span class="p">,</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">backdrop</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+</span><span class='line'>  <span class="nx">keyboard</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+</span><span class='line'>  <span class="nx">backdropClass</span><span class="o">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+</span><span class='line'>  <span class="nx">positionSelector</span><span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+</span><span class='line'>  <span class="nx">position</span><span class="o">:</span> <span class="s2">&quot;bottom&quot;</span><span class="p">,</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">didInsertElement</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">controller</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;controller&quot;</span><span class="p">),</span>
+</span><span class='line'>      <span class="nx">pos</span><span class="p">,</span> <span class="nx">tp</span><span class="p">,</span> <span class="nx">actualWidth</span><span class="p">,</span> <span class="nx">actualHeight</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">this</span><span class="p">.</span><span class="nx">$</span><span class="p">(</span><span class="s2">&quot;.modal&quot;</span><span class="p">).</span><span class="nx">modal</span><span class="p">({</span>
+</span><span class='line'>      <span class="nx">dynamic</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+</span><span class='line'>      <span class="nx">keyboard</span><span class="o">:</span> <span class="k">this</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;keyboard&quot;</span><span class="p">),</span>
+</span><span class='line'>      <span class="nx">backdropClass</span><span class="o">:</span> <span class="k">this</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;backdropClass&quot;</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">});</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">this</span><span class="p">.</span><span class="nx">$</span><span class="p">(</span><span class="s2">&quot;.modal&quot;</span><span class="p">).</span><span class="nx">one</span><span class="p">(</span><span class="s2">&quot;hidden&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>      <span class="k">if</span> <span class="p">(</span><span class="nx">controller</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="nx">controller</span><span class="p">.</span><span class="nx">send</span><span class="p">(</span><span class="s2">&quot;closeModal&quot;</span><span class="p">);</span>
+</span><span class='line'>      <span class="p">}</span>
+</span><span class='line'>    <span class="p">});</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1">// Dialog placement code</span>
+</span><span class='line'>    <span class="c1">// ...</span>
+</span><span class='line'>  <span class="p">},</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">close</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="k">this</span><span class="p">.</span><span class="nx">$</span><span class="p">(</span><span class="s2">&quot;.modal&quot;</span><span class="p">).</span><span class="nx">modal</span><span class="p">(</span><span class="s2">&quot;hide&quot;</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">this</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;controller&quot;</span><span class="p">).</span><span class="nx">send</span><span class="p">(</span><span class="s2">&quot;closeModal&quot;</span><span class="p">);</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="p">});</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li><code>layoutName</code> - a layout template can be specified, in our case <code>modal_layout</code> is simply a <code>DIV</code> with its css class set to <code>modal</code>. The <code>{{yield}}</code> keyword is a placeholder that indicates where the view will be rendered within the layout template.</li>
+<li><code>backdrop</code> - true/false, sets whether dialog should include a backdrop element.</li>
+<li><code>keyboard</code> - true/false, closes the modal when the escape key is pressed.</li>
+<li><code>backdropClass</code> - the css class of the backdrop element.</li>
+<li><code>positionSelector</code> - the dialog can be displayed relative to another element, this should be a selector expression.</li>
+<li><code>position</code> - if position relative to another element this should be one of top, right, bottom or left.</li>
+<li><code>didInsertElement</code> - creates an instance of the Bootstrap Modal dialog plugin.</li>
+<li><code>close</code> - the <code>errorModal.hbs</code> template triggers this action when it&#8217;s close button is clicked. We in turn trigger a <code>closeModal</code> which will eventually be handled by the application route.</li>
+</ul>
+
+
+<p>This view can then be simply used as seen below in the <code>errorModal.hbs</code> template.</p>
+
+<figure class='code'><figcaption><span>errorModal.hbs</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'>{{#view App.BootstrapModalView backdropClass=&quot;modal-backdrop-transparent&quot;}}
+</span><span class='line'>  <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&quot;modal-header&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;button</span> <span class="na">type=</span><span class="s">&quot;button&quot;</span> <span class="na">class=</span><span class="s">&quot;close&quot;</span> <span class="err">{{</span><span class="na">action</span> <span class="na">close</span> <span class="na">target=</span><span class="s">&quot;view&quot;</span><span class="err">}}</span><span class="nt">&gt;</span><span class="ni">&amp;times;</span><span class="nt">&lt;/button&gt;</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="nt">&lt;h3</span> <span class="na">id=</span><span class="s">&quot;modal_error_subject&quot;</span><span class="nt">&gt;</span>Error<span class="nt">&lt;/h3&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;/div&gt;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&quot;modal-body&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;p</span> <span class="na">id=</span><span class="s">&quot;modal_error_text&quot;</span><span class="nt">&gt;</span>Whoops, something has gone wrong!<span class="nt">&lt;/p&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;/div&gt;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&quot;modal-footer&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;a</span> <span class="na">class=</span><span class="s">&quot;btn&quot;</span> <span class="err">{{</span><span class="na">action</span> <span class="na">close</span> <span class="na">target=</span><span class="s">&quot;view&quot;</span><span class="err">}}</span><span class="nt">&gt;</span>Close<span class="nt">&lt;/a&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;/div&gt;</span>
+</span><span class='line'>{{/view}}
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>Table list</h4>
+
+<p>With authentication and the modal dialog support in place we can move on to the next page that is required after entering in storage account credentials which is the table listing.</p>
+
+<p>This simply displays a list of the tables that are associated with the storage account.</p>
+
+<figure class='code'><figcaption><span>TablesRoute.js </span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="nx">App</span><span class="p">.</span><span class="nx">TablesRoute</span> <span class="o">=</span> <span class="nx">App</span><span class="p">.</span><span class="nx">AuthenticatedRoute</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+</span><span class='line'>  <span class="nx">model</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="k">return</span> <span class="nx">App</span><span class="p">.</span><span class="nx">Tables</span><span class="p">.</span><span class="nx">find</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;credentials&quot;</span><span class="p">));</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="p">});</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li><code>model</code> - as we extend from <code>AuthenticatedRoute</code> we have the users storage account credentials available, we then make a call to the JSON API to retrieve a list of tables defined for the account. As we haven&#8217;t defined a controller Ember will automatically create one, set the model &amp; bind it to the corresponding template.</li>
+</ul>
+
+
+<figure class='code'><figcaption><span>tables.hbs </span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&quot;row&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&quot;span9&quot;</span> <span class="na">id=</span><span class="s">&quot;results&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>    {{outlet}}
+</span><span class='line'>  <span class="nt">&lt;/div&gt;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&quot;span3&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;h1</span> <span class="na">id=</span><span class="s">&quot;accountName&quot;</span><span class="nt">&gt;</span>{{storageAccountName}}<span class="nt">&lt;/h1&gt;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="nt">&lt;div</span> <span class="na">id=</span><span class="s">&quot;tableList&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;ul</span> <span class="na">class=</span><span class="s">&quot;nav nav-list&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;li</span> <span class="na">class=</span><span class="s">&quot;nav-header&quot;</span><span class="nt">&gt;</span>Tables<span class="nt">&lt;/li&gt;</span>
+</span><span class='line'>      {{#each table in tables}}
+</span><span class='line'>        <span class="nt">&lt;li&gt;</span>
+</span><span class='line'>          {{#linkTo table.page table App.Page.FIRSTPAGE}}
+</span><span class='line'>            {{table.id}}
+</span><span class='line'>          {{/linkTo}}
+</span><span class='line'>        <span class="nt">&lt;/li&gt;</span>
+</span><span class='line'>      {{else}}
+</span><span class='line'>        <span class="nt">&lt;li&gt;</span>No tables defined for this storage account.<span class="nt">&lt;/li&gt;</span>
+</span><span class='line'>      {{/each}}
+</span><span class='line'>      <span class="nt">&lt;/ul&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;/div&gt;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="nt">&lt;div</span> <span class="na">id=</span><span class="s">&quot;rowDetails&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>      {{outlet &quot;selectedRowsOutlet&quot;}}
+</span><span class='line'>    <span class="nt">&lt;/div&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;/div&gt;</span>
+</span><span class='line'><span class="nt">&lt;/div&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li><code>outlet</code> - before a table is selected the <code>tables/index.hbs</code> template will be rendered into this outlet.</li>
+<li><code>storageAccountName</code> - the storage account name.</li>
+<li><code>{{#each table in tables}}</code> - renders a list of tables that are defined in the storage account, the <code>linkTo</code> helper creates links to the first page of records for the selected table.</li>
+<li><code>selectedRowsOutlet</code> - by default nothing is rendered into this template. It is populated once the user has navigated to a particular table and has selected records. The template <code>table/selectedRows.hbs</code> will then be rendered into this outlet.</li>
+</ul>
+
+
+<p>When first loaded Ember will render <code>tables/index.hbs</code> into the default <code>outlet</code> of the <code>tables.hbs</code> template. Once the user selects a table to view the table results will be rendered into the outlet instead.</p>
+
+<figure class='code'><figcaption><span>tables/index.hbs</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;h2&gt;</span>Get started.<span class="nt">&lt;/h2&gt;</span>
+</span><span class='line'><span class="nt">&lt;p&gt;</span>Please select a table on the side to get started.<span class="nt">&lt;/p&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>Pagination</h4>
+
+<p>When a table is selected the application will navigate to the first page of results, if more results are available then the Azure storage API will include what is known as a continuation token. The continuation token is made up of a partition key and a row key and must be included in the subsequent request in order to obtain the next set of results.</p>
+
+<figure class='code'><figcaption><span>TablePageRoute.js</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+<span class='line-number'>59</span>
+<span class='line-number'>60</span>
+<span class='line-number'>61</span>
+<span class='line-number'>62</span>
+<span class='line-number'>63</span>
+<span class='line-number'>64</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="nx">App</span><span class="p">.</span><span class="nx">TablePageRoute</span> <span class="o">=</span> <span class="nx">App</span><span class="p">.</span><span class="nx">AuthenticatedRoute</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+</span><span class='line'>  <span class="nx">renderTemplate</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">selectedRowsController</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">controllerFor</span><span class="p">(</span><span class="s2">&quot;selectedRows&quot;</span><span class="p">);</span>
+</span><span class='line'>    <span class="k">this</span><span class="p">.</span><span class="nx">render</span><span class="p">();</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">this</span><span class="p">.</span><span class="nx">render</span><span class="p">(</span><span class="s2">&quot;table/selectedRows&quot;</span><span class="p">,</span> <span class="p">{</span>
+</span><span class='line'>      <span class="nx">into</span><span class="o">:</span> <span class="s2">&quot;tables&quot;</span><span class="p">,</span>
+</span><span class='line'>      <span class="nx">outlet</span><span class="o">:</span> <span class="s2">&quot;selectedRowsOutlet&quot;</span><span class="p">,</span>
+</span><span class='line'>      <span class="nx">controller</span><span class="o">:</span> <span class="nx">selectedRowsController</span>
+</span><span class='line'>    <span class="p">});</span>
+</span><span class='line'>  <span class="p">},</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">setupController</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">controller</span><span class="p">,</span> <span class="nx">model</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">self</span> <span class="o">=</span> <span class="k">this</span><span class="p">,</span>
+</span><span class='line'>      <span class="nx">pageId</span> <span class="o">=</span> <span class="nx">model</span><span class="p">.</span><span class="nx">id</span><span class="p">,</span>
+</span><span class='line'>      <span class="nx">tableId</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">modelFor</span><span class="p">(</span><span class="s2">&quot;table&quot;</span><span class="p">).</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">),</span>
+</span><span class='line'>      <span class="nx">credentials</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;credentials&quot;</span><span class="p">),</span>
+</span><span class='line'>      <span class="nx">continuation</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">_getPageContinuationToken</span><span class="p">(</span><span class="nx">pageId</span> <span class="o">-</span> <span class="mi">1</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">model</span><span class="p">.</span><span class="nx">rows</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>      <span class="nx">model</span> <span class="o">=</span> <span class="nx">App</span><span class="p">.</span><span class="nx">Page</span><span class="p">.</span><span class="nx">find</span><span class="p">(</span><span class="nx">tableId</span><span class="p">,</span> <span class="nx">credentials</span><span class="p">,</span> <span class="nx">pageId</span><span class="p">,</span> <span class="nx">continuation</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="nx">model</span><span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">value</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="c1">// success</span>
+</span><span class='line'>        <span class="nx">self</span><span class="p">.</span><span class="nx">_setPageContinuationToken</span><span class="p">(</span><span class="nx">value</span><span class="p">.</span><span class="nx">id</span><span class="p">,</span> <span class="nx">value</span><span class="p">.</span><span class="nx">continuation</span><span class="p">);</span>
+</span><span class='line'>        <span class="nx">controller</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s2">&quot;model&quot;</span><span class="p">,</span> <span class="nx">value</span><span class="p">);</span>
+</span><span class='line'>      <span class="p">},</span> <span class="kd">function</span><span class="p">(</span><span class="nx">error</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="c1">// failure</span>
+</span><span class='line'>        <span class="k">throw</span> <span class="nx">error</span><span class="p">;</span>
+</span><span class='line'>      <span class="p">});</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="p">},</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">model</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">params</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">pageId</span> <span class="o">=</span> <span class="nb">parseInt</span><span class="p">(</span><span class="nx">params</span><span class="p">.</span><span class="nx">page_id</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span> <span class="o">||</span> <span class="mi">1</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">return</span> <span class="nx">App</span><span class="p">.</span><span class="nx">Page</span><span class="p">.</span><span class="nx">create</span><span class="p">({</span><span class="nx">id</span><span class="o">:</span> <span class="nx">pageId</span><span class="p">});</span>
+</span><span class='line'>  <span class="p">},</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">_getPageContinuationToken</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">pageId</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">continuationToken</span> <span class="o">=</span> <span class="kc">null</span><span class="p">,</span>
+</span><span class='line'>      <span class="nx">table</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">modelFor</span><span class="p">(</span><span class="s2">&quot;table&quot;</span><span class="p">),</span>
+</span><span class='line'>      <span class="nx">continuationTokens</span> <span class="o">=</span> <span class="nx">table</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;continuationTokens&quot;</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">if</span> <span class="p">(</span><span class="nx">continuationTokens</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>      <span class="nx">continuationToken</span> <span class="o">=</span>  <span class="nx">continuationTokens</span><span class="p">[</span><span class="nx">pageId</span><span class="p">];</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">return</span> <span class="nx">continuationToken</span><span class="p">;</span>
+</span><span class='line'>  <span class="p">},</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">_setPageContinuationToken</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">pageId</span><span class="p">,</span> <span class="nx">continuationToken</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">table</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">modelFor</span><span class="p">(</span><span class="s2">&quot;table&quot;</span><span class="p">),</span>
+</span><span class='line'>      <span class="nx">continuationTokens</span> <span class="o">=</span> <span class="nx">table</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;continuationTokens&quot;</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">continuationTokens</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>      <span class="nx">continuationTokens</span> <span class="o">=</span> <span class="p">{};</span>
+</span><span class='line'>      <span class="nx">table</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s2">&quot;continuationTokens&quot;</span><span class="p">,</span> <span class="nx">continuationTokens</span><span class="p">);</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="nx">continuationTokens</span><span class="p">[</span><span class="nx">pageId</span><span class="p">]</span> <span class="o">=</span> <span class="nx">continuationToken</span><span class="p">;</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="p">});</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li><code>renderTemplate</code> - this renders not only the default template but also the <code>table/selectedRows</code> template.</li>
+<li><code>setupController</code> - this hook is called after the <code>model</code> hook, here we check if the model is fully loaded, if not we get the current continuation token and request the detailed results for the current page.</li>
+<li><code>model</code> - returns an instance of <code>Page</code> with only the <code>id</code> property set, the model will be fully loaded in <code>setupController</code>.</li>
+<li><code>_getPageContinuationToken</code> - gets the current <code>Table</code> and loads the continuation token for the current page of results.</li>
+<li><code>_setPageContinuationToken</code> - stores a continuation token for a given page on the <code>Table</code> model instance.</li>
+</ul>
+
+
+<figure class='code'><figcaption><span>TablePageController.js</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="nx">App</span><span class="p">.</span><span class="nx">TablePageController</span> <span class="o">=</span> <span class="nx">Ember</span><span class="p">.</span><span class="nx">ObjectController</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+</span><span class='line'>  <span class="nx">toggleRowSelection</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">row</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">isSelected</span> <span class="o">=</span> <span class="nx">row</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;isSelected&quot;</span><span class="p">)</span> <span class="o">||</span> <span class="kc">false</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="nx">row</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s2">&quot;isSelected&quot;</span><span class="p">,</span> <span class="o">!</span><span class="nx">isSelected</span><span class="p">);</span>
+</span><span class='line'>  <span class="p">},</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">columns</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">columns</span> <span class="o">=</span> <span class="p">[],</span>
+</span><span class='line'>      <span class="nx">excludedColumns</span> <span class="o">=</span> <span class="p">{</span>
+</span><span class='line'>        <span class="nx">id</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+</span><span class='line'>        <span class="nx">PartitionKey</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+</span><span class='line'>        <span class="nx">RowKey</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+</span><span class='line'>        <span class="nx">isSelected</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+</span><span class='line'>        <span class="nx">partitionKeyChanged</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+</span><span class='line'>        <span class="nx">_</span><span class="o">:</span> <span class="kc">true</span>
+</span><span class='line'>      <span class="p">};</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="nx">_</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;rows&quot;</span><span class="p">),</span> <span class="kd">function</span><span class="p">(</span><span class="nx">element</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>      <span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">column</span> <span class="k">in</span> <span class="nx">element</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">element</span><span class="p">.</span><span class="nx">hasOwnProperty</span><span class="p">(</span><span class="nx">column</span><span class="p">))</span> <span class="p">{</span>
+</span><span class='line'>          <span class="k">break</span><span class="p">;</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">excludedColumns</span><span class="p">[</span><span class="nx">column</span><span class="p">]</span> <span class="o">&amp;&amp;</span> <span class="nx">_</span><span class="p">.</span><span class="nx">contains</span><span class="p">(</span><span class="nx">columns</span><span class="p">,</span> <span class="nx">column</span><span class="p">)</span> <span class="o">!==</span> <span class="kc">true</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>          <span class="nx">columns</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">column</span><span class="p">);</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>      <span class="p">}</span>
+</span><span class='line'>    <span class="p">});</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">return</span> <span class="nx">columns</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="p">}.</span><span class="nx">property</span><span class="p">(</span><span class="s2">&quot;rows.@each&quot;</span><span class="p">),</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">columnHeaders</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">columnHeaders</span> <span class="o">=</span> <span class="nx">_</span><span class="p">.</span><span class="nx">clone</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;columns&quot;</span><span class="p">));</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1">// blank header for &quot;isSelected&quot; column</span>
+</span><span class='line'>    <span class="nx">columnHeaders</span><span class="p">.</span><span class="nx">unshift</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">return</span> <span class="nx">columnHeaders</span><span class="p">;</span>
+</span><span class='line'>  <span class="p">}.</span><span class="nx">property</span><span class="p">(</span><span class="s2">&quot;columns&quot;</span><span class="p">),</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">paginationLinks</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">links</span> <span class="o">=</span> <span class="p">[],</span>
+</span><span class='line'>      <span class="nx">currentPage</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">),</span>
+</span><span class='line'>      <span class="nx">startPage</span> <span class="o">=</span> <span class="p">(</span><span class="nx">currentPage</span> <span class="o">&gt;</span> <span class="mi">5</span><span class="p">)</span> <span class="o">?</span> <span class="p">(</span><span class="nx">currentPage</span> <span class="o">-</span> <span class="mi">5</span><span class="p">)</span> <span class="o">:</span> <span class="mi">1</span><span class="p">,</span>
+</span><span class='line'>      <span class="nx">endPage</span> <span class="o">=</span> <span class="nx">currentPage</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="nx">endPage</span> <span class="o">+=</span> <span class="k">this</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;continuation&quot;</span><span class="p">)</span> <span class="o">?</span> <span class="mi">2</span> <span class="o">:</span> <span class="mi">1</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1">// Create a list of App.Page objects</span>
+</span><span class='line'>    <span class="c1">// ...</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">return</span> <span class="nx">links</span><span class="p">;</span>
+</span><span class='line'>  <span class="p">}.</span><span class="nx">property</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">)</span>
+</span><span class='line'><span class="p">});</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li><code>toggleRowSelection</code> - toggles the <code>isSelected</code> property for a given row.</li>
+<li><code>columns</code> - returns a list of columns that will be displayed in the results table. A common set of properties are excluded from this list.</li>
+<li><code>columnHeaders</code> - returns a list of column headers that are displayed in the results table.</li>
+<li><code>paginationLinks</code> - a list <code>Page</code> instances that are used to render the pagination links.</li>
+</ul>
+
+
+<figure class='code'><figcaption><span>table/page.hbs</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+<span class='line-number'>59</span>
+<span class='line-number'>60</span>
+<span class='line-number'>61</span>
+<span class='line-number'>62</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;table</span> <span class="na">class=</span><span class="s">&quot;table table-condensed&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;thead&gt;</span>
+</span><span class='line'>    {{#each column in columnHeaders}}
+</span><span class='line'>      <span class="nt">&lt;th&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;p&gt;</span>{{column}}<span class="nt">&lt;/p&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;/th&gt;</span>
+</span><span class='line'>    {{/each}}
+</span><span class='line'>  <span class="nt">&lt;/thead&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;tbody&gt;</span>
+</span><span class='line'>  {{#each row in rows}}
+</span><span class='line'>
+</span><span class='line'>    {{#if row.partitionKeyChanged}}
+</span><span class='line'>      <span class="nt">&lt;tr</span> <span class="na">class=</span><span class="s">&quot;partition-key-row&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;td&gt;&lt;/td&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;td</span> <span class="na">colspan=</span><span class="s">&quot;2&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>          <span class="nt">&lt;h3&gt;</span>{{row.PartitionKey}}<span class="nt">&lt;/h3&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;/td&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;td&gt;</span>
+</span><span class='line'>          <span class="nt">&lt;p</span> <span class="na">class=</span><span class="s">&quot;text-right&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>            <span class="nt">&lt;small&gt;</span>PARTITION KEY<span class="nt">&lt;/small&gt;</span>
+</span><span class='line'>          <span class="nt">&lt;/p&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;/td&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;/tr&gt;</span>
+</span><span class='line'>    {{/if}}
+</span><span class='line'>
+</span><span class='line'>    <span class="nt">&lt;tr</span>
+</span><span class='line'>      <span class="err">{{</span><span class="na">action</span> <span class="err">&quot;</span><span class="na">toggleRowSelection</span><span class="err">&quot;</span> <span class="na">row</span> <span class="na">on=</span><span class="s">&quot;click&quot;</span><span class="err">}}</span>
+</span><span class='line'>      <span class="err">{{</span><span class="na">bindAttr</span> <span class="na">class=</span><span class="s">&quot;:master-row row.isSelected:master-row-selected&quot;</span><span class="err">}}</span>
+</span><span class='line'>    <span class="nt">&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;td&gt;</span>
+</span><span class='line'>        {{view Ember.Checkbox checkedBinding=&quot;row.isSelected&quot; bubbles=false}}
+</span><span class='line'>      <span class="nt">&lt;/td&gt;</span>
+</span><span class='line'>      {{#each column in ../columns}}
+</span><span class='line'>        <span class="nt">&lt;td&gt;</span>
+</span><span class='line'>          <span class="nt">&lt;p&gt;</span>
+</span><span class='line'>            {{tableCell ../row}}
+</span><span class='line'>          <span class="nt">&lt;/p&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;/td&gt;</span>
+</span><span class='line'>      {{/each}}
+</span><span class='line'>    <span class="nt">&lt;/tr&gt;</span>
+</span><span class='line'>  {{/each}}
+</span><span class='line'>
+</span><span class='line'>  <span class="nt">&lt;/tbody&gt;</span>
+</span><span class='line'><span class="nt">&lt;/table&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&quot;pagination&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;ul&gt;</span>
+</span><span class='line'>    {{#each pageLink in paginationLinks}}
+</span><span class='line'>    <span class="nt">&lt;li</span> <span class="err">{{</span><span class="na">bindAttr</span> <span class="na">class=</span><span class="s">&quot;pageLink.isActive:active pageLink.disabled&quot;</span><span class="err">}}</span><span class="nt">&gt;</span>
+</span><span class='line'>        {{#unless pageLink.disabled}}
+</span><span class='line'>          {{#linkTo table.page pageLink}}
+</span><span class='line'>            {{safeString pageLink.displayText}}
+</span><span class='line'>          {{/linkTo}}
+</span><span class='line'>        {{/unless}}
+</span><span class='line'>
+</span><span class='line'>        {{#if pageLink.disabled}}
+</span><span class='line'>          <span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">&quot;disabled&quot;</span><span class="nt">&gt;</span>{{safeString pageLink.displayText}}<span class="nt">&lt;/span&gt;</span>
+</span><span class='line'>        {{/if}}
+</span><span class='line'>    <span class="nt">&lt;/li&gt;</span>
+</span><span class='line'>    {{/each}}
+</span><span class='line'>  <span class="nt">&lt;/ul&gt;</span>
+</span><span class='line'><span class="nt">&lt;/div&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The template above uses a customised version of <code>Ember.CheckBox</code> and also a custom Handlebars helper <code>tableCell</code>.</p>
+
+<p>In the template the user is allowed to toggle row selection by either checking the &#8220;isSelected&#8221; checkbox or by just clicking on the row itself. The problem with the standard <code>Ember.CheckBox</code> is that there is no way to stop the click event from bubbling up and subsequently triggering the <code>toggleRowSelection</code> action. The customised version below has an extra &#8220;bubbles&#8221; property which when set to false will disable click event propagation.</p>
+
+<figure class='code'><figcaption><span>EmberCheckbox.js</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="nx">Ember</span><span class="p">.</span><span class="nx">Checkbox</span> <span class="o">=</span> <span class="nx">Ember</span><span class="p">.</span><span class="nx">View</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+</span><span class='line'>  <span class="nx">classNames</span><span class="o">:</span> <span class="p">[</span><span class="s2">&quot;ember-checkbox&quot;</span><span class="p">],</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">tagName</span><span class="o">:</span> <span class="s2">&quot;input&quot;</span><span class="p">,</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">attributeBindings</span><span class="o">:</span> <span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;checked&quot;</span><span class="p">,</span> <span class="s2">&quot;indeterminate&quot;</span><span class="p">,</span> <span class="s2">&quot;disabled&quot;</span><span class="p">,</span> <span class="s2">&quot;tabindex&quot;</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">],</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">type</span><span class="o">:</span> <span class="s2">&quot;checkbox&quot;</span><span class="p">,</span>
+</span><span class='line'>  <span class="nx">checked</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>
+</span><span class='line'>  <span class="nx">disabled</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>
+</span><span class='line'>  <span class="nx">indeterminate</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>
+</span><span class='line'>  <span class="nx">bubbles</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">init</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="k">this</span><span class="p">.</span><span class="nx">_super</span><span class="p">();</span>
+</span><span class='line'>    <span class="k">this</span><span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s2">&quot;change&quot;</span><span class="p">,</span> <span class="k">this</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">_updateElementValue</span><span class="p">);</span>
+</span><span class='line'>  <span class="p">},</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">didInsertElement</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="k">this</span><span class="p">.</span><span class="nx">_super</span><span class="p">();</span>
+</span><span class='line'>    <span class="k">this</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;element&quot;</span><span class="p">).</span><span class="nx">indeterminate</span> <span class="o">=</span> <span class="o">!!</span><span class="k">this</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;indeterminate&quot;</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="k">this</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;bubbles&quot;</span><span class="p">))</span> <span class="p">{</span>
+</span><span class='line'>      <span class="k">this</span><span class="p">.</span><span class="nx">$</span><span class="p">().</span><span class="nx">click</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">e</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="nx">e</span><span class="p">.</span><span class="nx">stopPropagation</span><span class="p">();</span>
+</span><span class='line'>      <span class="p">});</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>  <span class="p">},</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">_updateElementValue</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nx">Ember</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="s2">&quot;checked&quot;</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">$</span><span class="p">().</span><span class="nx">prop</span><span class="p">(</span><span class="s2">&quot;checked&quot;</span><span class="p">));</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="p">});</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The other custom item used by the template is a Handlebars helper which is used to specific values for each of the display columns within the row. If the value is a valid date then it is formatted using the <a href="http://momentjs.com/">moment.js</a> library.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="nx">Ember</span><span class="p">.</span><span class="nx">Handlebars</span><span class="p">.</span><span class="nx">helper</span><span class="p">(</span><span class="s2">&quot;tableCell&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">row</span><span class="p">,</span> <span class="nx">column</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>  <span class="kd">var</span> <span class="nx">value</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+</span><span class='line'>    <span class="nx">columnName</span> <span class="o">=</span> <span class="nx">column</span><span class="p">.</span><span class="nx">data</span><span class="p">.</span><span class="nx">keywords</span><span class="p">.</span><span class="nx">column</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">if</span> <span class="p">(</span><span class="nx">row</span><span class="p">[</span><span class="nx">columnName</span><span class="p">])</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nx">value</span> <span class="o">=</span> <span class="nx">row</span><span class="p">[</span><span class="nx">columnName</span><span class="p">];</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">if</span> <span class="p">(</span><span class="nx">moment</span><span class="p">(</span><span class="nx">value</span><span class="p">).</span><span class="nx">isValid</span><span class="p">())</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nx">value</span> <span class="o">=</span> <span class="nx">moment</span><span class="p">(</span><span class="nx">value</span><span class="p">).</span><span class="nx">calendar</span><span class="p">();</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">return</span> <span class="nx">value</span><span class="p">;</span>
+</span><span class='line'><span class="p">});</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The final items to look at are the controller and template for selected items. As shown above the <code>TablePageRoute</code> renders this into the <code>selectedRowsOutlet</code> of the <code>tables.hbs</code>.</p>
+
+<figure class='code'><figcaption><span>SelectedRowsController.js</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="nx">App</span><span class="p">.</span><span class="nx">SelectedRowsController</span> <span class="o">=</span> <span class="nx">Ember</span><span class="p">.</span><span class="nx">ObjectController</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+</span><span class='line'>  <span class="nx">tablePage</span><span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+</span><span class='line'>  <span class="nx">needs</span><span class="o">:</span> <span class="s2">&quot;tablePage&quot;</span><span class="p">,</span>
+</span><span class='line'>  <span class="nx">tablePageBinding</span><span class="o">:</span> <span class="s2">&quot;controllers.tablePage&quot;</span><span class="p">,</span>
+</span><span class='line'>  <span class="nx">currentIndex</span><span class="o">:</span> <span class="mi">0</span><span class="p">,</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">selectedRows</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">rows</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;tablePage&quot;</span><span class="p">).</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;rows&quot;</span><span class="p">),</span>
+</span><span class='line'>      <span class="nx">selectedRows</span> <span class="o">=</span> <span class="nx">_</span><span class="p">.</span><span class="nx">where</span><span class="p">(</span><span class="nx">rows</span><span class="p">,</span> <span class="p">{</span><span class="nx">isSelected</span><span class="o">:</span> <span class="kc">true</span><span class="p">});</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">if</span> <span class="p">(</span><span class="nx">selectedRows</span><span class="p">.</span><span class="nx">length</span> <span class="o">&lt;=</span> <span class="k">this</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;currentIndex&quot;</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="nx">selectedRows</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>      <span class="k">this</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s2">&quot;currentIndex&quot;</span><span class="p">,</span> <span class="nx">selectedRows</span><span class="p">.</span><span class="nx">length</span> <span class="o">-</span> <span class="mi">1</span><span class="p">);</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">return</span> <span class="nx">selectedRows</span><span class="p">;</span>
+</span><span class='line'>  <span class="p">}.</span><span class="nx">property</span><span class="p">(</span><span class="s2">&quot;tablePage.rows.@each.isSelected&quot;</span><span class="p">),</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">hasSelectedRows</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="k">return</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;selectedRows&quot;</span><span class="p">).</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">);</span>
+</span><span class='line'>  <span class="p">}.</span><span class="nx">property</span><span class="p">(</span><span class="s2">&quot;selectedRows&quot;</span><span class="p">),</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">moveNext</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">currentIndex</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;currentIndex&quot;</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">if</span> <span class="p">(</span><span class="nx">currentIndex</span> <span class="o">&lt;</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;selectedRows&quot;</span><span class="p">).</span><span class="nx">length</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span> <span class="p">{</span>
+</span><span class='line'>      <span class="k">this</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s2">&quot;currentIndex&quot;</span><span class="p">,</span> <span class="nx">currentIndex</span> <span class="o">+</span> <span class="mi">1</span><span class="p">);</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>  <span class="p">},</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">movePrevious</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">currentIndex</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;currentIndex&quot;</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">if</span> <span class="p">(</span><span class="nx">currentIndex</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>      <span class="k">this</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s2">&quot;currentIndex&quot;</span><span class="p">,</span> <span class="nx">currentIndex</span> <span class="o">-</span> <span class="mi">1</span><span class="p">);</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>  <span class="p">},</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">moveNextEnabled</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="k">return</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;currentIndex&quot;</span><span class="p">)</span> <span class="o">&lt;</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;selectedRows&quot;</span><span class="p">).</span><span class="nx">length</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">);</span>
+</span><span class='line'>  <span class="p">}.</span><span class="nx">property</span><span class="p">(</span><span class="s2">&quot;currentIndex&quot;</span><span class="p">,</span> <span class="s2">&quot;selectedRows&quot;</span><span class="p">),</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">movePreviousEnabled</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="k">return</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;currentIndex&quot;</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">);</span>
+</span><span class='line'>  <span class="p">}.</span><span class="nx">property</span><span class="p">(</span><span class="s2">&quot;currentIndex&quot;</span><span class="p">),</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">currentRow</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;selectedRows&quot;</span><span class="p">)[</span><span class="k">this</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;currentIndex&quot;</span><span class="p">)];</span>
+</span><span class='line'>  <span class="p">}.</span><span class="nx">property</span><span class="p">(</span><span class="s2">&quot;selectedRows&quot;</span><span class="p">,</span> <span class="s2">&quot;currentIndex&quot;</span><span class="p">),</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nx">currentDisplayIndex</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>    <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;currentIndex&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
+</span><span class='line'>  <span class="p">}.</span><span class="nx">property</span><span class="p">(</span><span class="s2">&quot;currentIndex&quot;</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">});</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<ul>
+<li><code>tablePage</code> - we have a dependency on the table page controller, Ember will wire up a reference to this property.</li>
+<li><code>needs</code> - defines <code>tablePage</code> as a dependency.</li>
+<li><code>tablePageBinding</code> - sets the binding that will be used to wire <code>tablePage</code>.</li>
+<li><code>currentIndex</code> - the index of the record being displayed.</li>
+<li><code>selectedRows</code> - a list of all the rows that are currently selected on the table details page.</li>
+<li><code>hasSelectedRows</code> - true/false if there are any selected rows.</li>
+<li><code>moveNext</code> - displays the next selected record.</li>
+<li><code>movePrevious</code> - displays the previous selected record.</li>
+<li><code>moveNextEnabled</code> - true/false if there is another record to display.</li>
+<li><code>movePreviousEnabled</code> - true/false if there is a previous record to display.</li>
+<li><code>currentRow</code> - the current record.</li>
+<li><code>currentDisplayIndex</code> - the index of the current record as displayed to the user.</li>
+</ul>
+
+
+<figure class='code'><figcaption><span>table/selectedRows.hbs</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;p&gt;</span><span class="ni">&amp;nbsp;</span><span class="nt">&lt;/p&gt;</span>
+</span><span class='line'><span class="nt">&lt;ul</span> <span class="err">{{</span><span class="na">bindAttr</span> <span class="na">class=</span><span class="s">&quot;:nav :nav-list hasSelectedRows:show:hide&quot;</span><span class="err">}}</span><span class="nt">&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;li</span> <span class="na">class=</span><span class="s">&quot;nav-header&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>       <span class="nt">&lt;span&gt;</span>ROW DETAILS<span class="nt">&lt;/span&gt;</span>
+</span><span class='line'>       <span class="nt">&lt;span&gt;</span>({{currentDisplayIndex}}/{{selectedRows.length}})<span class="nt">&lt;/span&gt;</span>
+</span><span class='line'>       <span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">&quot;pull-right&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>           <span class="nt">&lt;i</span> <span class="err">{{</span><span class="na">action</span> <span class="err">&quot;</span><span class="na">movePrevious</span><span class="err">&quot;</span> <span class="na">on=</span><span class="s">&quot;click&quot;</span><span class="err">}}</span> <span class="err">{{</span><span class="na">bindAttr</span> <span class="na">class=</span><span class="s">&quot;:icon-btn :icon :icon-chevron-left movePreviousEnabled:enabled:disabled&quot;</span><span class="err">}}</span><span class="nt">&gt;&lt;/i&gt;</span>
+</span><span class='line'>           <span class="nt">&lt;i</span> <span class="err">{{</span><span class="na">action</span> <span class="err">&quot;</span><span class="na">moveNext</span><span class="err">&quot;</span> <span class="na">on=</span><span class="s">&quot;click&quot;</span><span class="err">}}</span> <span class="err">{{</span><span class="na">bindAttr</span> <span class="na">class=</span><span class="s">&quot;:icon-btn :icon :icon-chevron-right moveNextEnabled:enabled:disabled&quot;</span><span class="err">}}</span><span class="nt">&gt;&lt;/i&gt;</span>
+</span><span class='line'>       <span class="nt">&lt;/span&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;/li&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;li&gt;</span>
+</span><span class='line'>       {{#with currentRow}}
+</span><span class='line'>        <span class="nt">&lt;small&gt;</span>
+</span><span class='line'>            <span class="nt">&lt;p&gt;</span>
+</span><span class='line'>              <span class="nt">&lt;strong&gt;</span>ID<span class="nt">&lt;/strong&gt;</span>
+</span><span class='line'>              <span class="nt">&lt;br/&gt;</span>
+</span><span class='line'>              {{input type=&quot;text&quot; value=_.id disabled=true}}
+</span><span class='line'>            <span class="nt">&lt;/p&gt;</span>
+</span><span class='line'>            <span class="nt">&lt;p&gt;</span>
+</span><span class='line'>              <span class="nt">&lt;strong&gt;</span>Timestamp<span class="nt">&lt;/strong&gt;</span>
+</span><span class='line'>              <span class="nt">&lt;br/&gt;</span>
+</span><span class='line'>              <span class="nt">&lt;span&gt;</span>{{Timestamp}}<span class="nt">&lt;/span&gt;</span>
+</span><span class='line'>            <span class="nt">&lt;/p&gt;</span>
+</span><span class='line'>            <span class="nt">&lt;p&gt;</span>
+</span><span class='line'>              <span class="nt">&lt;strong&gt;</span>Link<span class="nt">&lt;/strong&gt;</span>
+</span><span class='line'>              <span class="nt">&lt;br/&gt;</span>
+</span><span class='line'>              {{input type=&quot;text&quot; value=_.link disabled=true}}
+</span><span class='line'>            <span class="nt">&lt;/p&gt;</span>
+</span><span class='line'>            <span class="nt">&lt;p&gt;</span>
+</span><span class='line'>              <span class="nt">&lt;strong&gt;</span>Updated<span class="nt">&lt;/strong&gt;</span>
+</span><span class='line'>              <span class="nt">&lt;br/&gt;</span>
+</span><span class='line'>              <span class="nt">&lt;span&gt;</span>{{_.updated}}<span class="nt">&lt;/span&gt;</span>
+</span><span class='line'>            <span class="nt">&lt;/p&gt;</span>
+</span><span class='line'>            <span class="nt">&lt;p&gt;</span>
+</span><span class='line'>              <span class="nt">&lt;strong&gt;</span>ETag<span class="nt">&lt;/strong&gt;</span>
+</span><span class='line'>              <span class="nt">&lt;br/&gt;</span>
+</span><span class='line'>              <span class="nt">&lt;span&gt;</span>{{_.etag}}<span class="nt">&lt;/span&gt;</span>
+</span><span class='line'>            <span class="nt">&lt;/p&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;/small&gt;</span>
+</span><span class='line'>        {{/with}}
+</span><span class='line'>    <span class="nt">&lt;/li&gt;</span>
+</span><span class='line'><span class="nt">&lt;/ul&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>Look ma, no unit tests!</h4>
+
+<p>So that&#8217;s enough for this morning, it&#8217;s not quite fully complete but getting there. Yes there aren&#8217;t any unit tests, I suck. Also I haven&#8217;t implemented the record deletion seen in Jeff&#8217;s app and there is also a problem with URLs regarding pagination.</p>
+
+<p>One of the core tenants of Ember is that you should be able to reload an app or share a link with someone and be able get back to exactly that point within the application. As they say this is one of the great things about the web and a major advantage we have over native applications.</p>
+
+<p>Due to the way paging works on Azure tables it isn&#8217;t possible to restore the application back to particular page based on the URL structure I have in place. I could always embed the continuation tokens within the URL or come up with a workaround but that&#8217;s for another day.</p>
+
+<ul>
+<li>The source for the app is here <a href="http://github.com/ronnieDrew/azure-table-explorer">http://github.com/ronnieDrew/azure-table-explorer</a></li>
+<li>And a live version is on Azure websites <a href="https://ember-waztable.azurewebsites.net">https://ember-waztable.azurewebsites.net</a></li>
+</ul>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Creating a Chocolatey package]]></title>
+    <link href="http://www.brewingcode.com/blog/2013/08/04/creating-a-chocolatey-package/"/>
+    <updated>2013-08-04T14:01:00+01:00</updated>
+    <id>http://www.brewingcode.com/blog/2013/08/04/creating-a-chocolatey-package</id>
+    <content type="html"><![CDATA[<p>These days <a href="http://chocolatey.org/">Chocolatey</a> is pretty much the first thing I install when working on a new PC. The utility of having that tool you need just a few keystrokes away is something we&#8217;ve been missing on Windows for years.</p>
+
+<p>It&#8217;s getting to the point where if a package isn&#8217;t on Chocolatey then it&#8217;s dead to me.</p>
+
+<p>That said with the <a href="http://chocolatey.org/packages">package list</a> hovering around the 1,200 mark there are gaps that you&#8217;re going to run into sooner or later. It&#8217;s up to the community to fill these gaps.</p>
+
+<!--more-->
+
+
+<p>Today I&#8217;m planning on testing some VM configurations on Azure with a view to optimizing IO performance. I&#8217;m a big <a href="http://ravendb.net">RavenDb</a> fan but running it on an Azure VM is problematic due to IO issues. Both the main Raven hosted solution providers (<a href="http://www.cloudbird.net">CloudBird</a> &amp; <a href="http://ravenhq.com">RavenHQ</a>) run on AWS so I thought I&#8217;d test the IO performance of some comparable VM instances on Azure &amp; AWS.</p>
+
+<p>In order to benchmark IO I&#8217;m using <a href="http://www.microsoft.com/en-us/download/details.aspx?id=20163">SQLIO</a> but as it&#8217;s not on the Chocolatey package gallery I thought I&#8217;d take 5 minutes out of my day to add it.</p>
+
+<p>The Chocolatey package really just consists of some meta data in a <a href="https://github.com/chocolatey/chocolatey/wiki/CreatePackages#nuspec">nuspec file</a>, an image to display on the gallery and 2 powershell scripts to silently install/uninstall the SQLIO MSI.</p>
+
+<p>The first thing we need to do is setup a <a href="https://github.com/ChocolateyPackages">GitHub repository</a> to host my Chocolatey packages. Then we create a directory to hold the sqlio package with the following 4 files.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>ChocolateyPackages\sqlio\sqlio.nuspec
+</span><span class='line'>ChocolateyPackages\sqlio\sqlio.png
+</span><span class='line'>ChocolateyPackages\sqlio\tools\chocolateyInstall.ps1
+</span><span class='line'>ChocolateyPackages\sqlio\tools\chocolateyUninstall.ps1</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The meta data in the nuspec file is all fairly self-explanatory, note that the iconUrl setting is the image that will be shown within the Chocolatey package gallery. This should be a png with a minimum size of 128x128.</p>
+
+<figure class='code'><figcaption><span>sqlio.nuspec</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+</pre></td><td class='code'><pre><code class='xml'><span class='line'><span class="cp">&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;</span>
+</span><span class='line'><span class="nt">&lt;package</span> <span class="na">xmlns=</span><span class="s">&quot;http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;metadata&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;id&gt;</span>sqlio<span class="nt">&lt;/id&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;version&gt;</span>1.0<span class="nt">&lt;/version&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;title&gt;</span>sqlio<span class="nt">&lt;/title&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;authors&gt;</span>Ronan Gibney<span class="nt">&lt;/authors&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;owners&gt;</span>Ronan Gibney<span class="nt">&lt;/owners&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;licenseUrl&gt;</span>http://www.microsoft.com/en-us/download/details.aspx?id=20163<span class="nt">&lt;/licenseUrl&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;projectUrl&gt;</span>http://www.microsoft.com/en-us/download/details.aspx?id=20163<span class="nt">&lt;/projectUrl&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;iconUrl&gt;</span>https://github.com/ronnieDrew/ChocolateyPackages/raw/master/sqlio/sqlio.png<span class="nt">&lt;/iconUrl&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;requireLicenseAcceptance&gt;</span>true<span class="nt">&lt;/requireLicenseAcceptance&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;description&gt;</span>SQLIO is a tool provided by Microsoft which can also be used to determine the I/O capacity of a given configuration. SQLIO is provided ‘as is’ and there is no support offered for any problems encountered when using the tool. Please refer to the EULA.doc for the license agreement prior to using this tool.<span class="nt">&lt;/description&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;summary&gt;</span>SQLIO is a tool provided by Microsoft which can also be used to determine the I/O capacity of a given configuration.<span class="nt">&lt;/summary&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;releaseNotes&gt;</span>http://www.microsoft.com/en-us/download/details.aspx?id=20163<span class="nt">&lt;/releaseNotes&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;tags&gt;</span>sqlio<span class="nt">&lt;/tags&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;/metadata&gt;</span>
+</span><span class='line'><span class="nt">&lt;/package&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The PowerShell files are just small wrappers around the MSIs own install/uninstall functionality. On both install/uninstall we need to check the install state in the registry and in order to do this we need to know the GUID assigned to the MSI.</p>
+
+<p>A quick way to get the GUID is to run the following PowerShell command after you&#8217;ve installed the MSI.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='powershell'><span class='line'><span class="nb">Get-WmiObject</span> <span class="n">-Class</span> <span class="n">Win32_Product</span> <span class="p">|</span> <span class="nb">Where-Object</span> <span class="p">{</span> <span class="nv">$_</span><span class="p">.</span><span class="n">Name</span> <span class="o">-match</span> <span class="s2">&quot;sqlio&quot;</span> <span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The install script just checks the install state in the registry and then calls the Chocolatey helper function <code>Install-ChocolateyPackage</code> which will download and install the MSI.</p>
+
+<figure class='code'><figcaption><span>chocolateyInstall.ps1</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+</pre></td><td class='code'><pre><code class='powershell'><span class='line'><span class="nv">$package</span> <span class="p">=</span> <span class="s1">&#39;sqlio&#39;</span>
+</span><span class='line'><span class="nv">$build</span> <span class="p">=</span> <span class="s1">&#39;1&#39;</span>
+</span><span class='line'><span class="nv">$guid</span><span class="p">=</span><span class="s1">&#39;{DD971DE9-FAF0-4A15-9BE4-5D766B05D11E}&#39;</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">try</span> <span class="p">{</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">if</span> <span class="p">(</span><span class="nb">Test-Path</span> <span class="s2">&quot;HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$guid&quot;</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nb">Write-ChocolateyFailure</span> <span class="nv">$package</span> <span class="s2">&quot;$package is already installed!&quot;</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>  <span class="k">else</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nv">$params</span> <span class="p">=</span> <span class="err">@</span><span class="p">{</span>
+</span><span class='line'>      <span class="n">PackageName</span> <span class="p">=</span> <span class="nv">$package</span><span class="err">;</span>
+</span><span class='line'>      <span class="n">FileType</span> <span class="p">=</span> <span class="s1">&#39;msi&#39;</span><span class="err">;</span>
+</span><span class='line'>      <span class="n">SilentArgs</span> <span class="p">=</span> <span class="s1">&#39;/QUIET&#39;</span><span class="err">;</span>
+</span><span class='line'>      <span class="n">Url</span> <span class="p">=</span> <span class="s2">&quot;http://download.microsoft.com/download/f/3/f/f3f92f8b-b24e-4c2e-9e86-d66df1f6f83b/SQLIO.msi&quot;</span><span class="err">;</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">Install-ChocolateyPackage</span> <span class="nv">@params</span>
+</span><span class='line'>    <span class="nb">Write-ChocolateySuccess</span> <span class="nv">$package</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">}</span> <span class="k">catch</span> <span class="p">{</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nb">Write-ChocolateyFailure</span> <span class="nv">$package</span> <span class="s2">&quot;</span><span class="si">$(</span><span class="err">$</span><span class="si">_.Exception.Message)</span><span class="s2">&quot;</span>
+</span><span class='line'>  <span class="n">throw</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And then we handle the uninstall. Again we just check the install state using the same GUID as before and hand over to the appropriate Chocolatey helper function to uninstall the MSI. Chocolatey in turn will elevate admin access and use msiexec to perform the uninstall.</p>
+
+<figure class='code'><figcaption><span>chocolateyUninstall.ps1</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+</pre></td><td class='code'><pre><code class='powershell'><span class='line'><span class="nv">$package</span> <span class="p">=</span> <span class="s1">&#39;sqlio&#39;</span>
+</span><span class='line'><span class="nv">$build</span> <span class="p">=</span> <span class="s1">&#39;1&#39;</span>
+</span><span class='line'><span class="nv">$clsid</span><span class="p">=</span><span class="s1">&#39;{DD971DE9-FAF0-4A15-9BE4-5D766B05D11E}&#39;</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">try</span> <span class="p">{</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">if</span> <span class="p">(</span><span class="nb">Test-Path</span> <span class="s2">&quot;HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$clsid&quot;</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">Uninstall-ChocolateyPackage</span> <span class="nv">$package</span> <span class="s1">&#39;msi&#39;</span> <span class="s2">&quot;$clsid /quiet&quot;</span>
+</span><span class='line'>    <span class="nb">Write-ChocolateySuccess</span> <span class="nv">$package</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nb">Write-ChocolateyFailure</span> <span class="nv">$package</span> <span class="s2">&quot;$package is not installed!&quot;</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">}</span> <span class="k">catch</span> <span class="p">{</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nb">Write-ChocolateyFailure</span> <span class="nv">$package</span> <span class="s2">&quot;</span><span class="si">$(</span><span class="err">$</span><span class="si">_.Exception.Message)</span><span class="s2">&quot;</span>
+</span><span class='line'>  <span class="n">throw</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>With that we just need to create &amp; test the package itself. To create the package we just run <code>cpack .\sqlio.nuspec</code> in package directory, this will bundle our nuspec and PowerShell files into a package called <code>sqlio.1.0.nupkg</code>. To test the package we can use <code>cinst sqlio -source %cd%</code> which will tell Chocolatey to install the package using the current directory.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='powershell'><span class='line'><span class="n">cpack</span> <span class="p">.\</span><span class="n">sqlio</span><span class="p">.</span><span class="n">nuspec</span>
+</span><span class='line'><span class="n">cinst</span> <span class="n">sqlio</span> <span class="n">-source</span> <span class="k">%</span><span class="n">cd</span><span class="p">%</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The final step is to push the package to the Chocolatey gallery. To do this we need to setup an account on <a href="https://chocolatey.org/account/Register">http://chocolatey.org</a> to obtain an api key. We then need to store the apikey for chocolatey.org and then push the package to the gallery.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='powershell'><span class='line'><span class="n">nuget</span> <span class="n">setApiKey</span> <span class="p">&lt;</span><span class="n">Your-Api-Key</span><span class="p">&gt;</span> <span class="n">-Source</span> <span class="n">http</span><span class="err">:</span><span class="p">//</span><span class="n">chocolatey</span><span class="p">.</span><span class="n">org</span><span class="p">/</span>
+</span><span class='line'><span class="n">cpush</span> <span class="n">sqlio</span><span class="p">.</span><span class="n">1</span><span class="p">.</span><span class="n">0</span><span class="p">.</span><span class="n">nupkg</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>With that we&#8217;re done, now back to Azure &amp; RavenDb&#8230;</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Getting Started]]></title>
+    <link href="http://www.brewingcode.com/blog/2013/08/03/getting-started/"/>
+    <updated>2013-08-03T09:13:00+01:00</updated>
+    <id>http://www.brewingcode.com/blog/2013/08/03/getting-started</id>
+    <content type="html"><![CDATA[<p>So how do you start the first post on a blog that you&#8217;ve been putting off for years? For me it&#8217;s resisting the urge to read all the first posts on the various tech blogs I follow to identify common themes and patterns.</p>
+
+<p>But that would be lame. Urge resisted.</p>
+
+<p>So a bit of background instead. I started programing in the late 90&#8217;s building desktop applications in VB6 in the financial sector but transitioned to the Web in 2006. These days my focus is in C# &amp; JavaScript though I may dabble in Ruby from time to time.</p>
+
+<p>.Net can take a bit of a bashing now and again and while it might not have a thriving OSS community to rival JavaScript/Ruby/Python/etc we do have some fantastic libraries/frameworks and things are slowly getting better. C# is a beautiful language and it&#8217;s a joy to develop using the likes <a href="https://github.com/ServiceStack/ServiceStack/wiki" title="ServiceStack">ServiceStack</a>, <a href="http://ravendb.net/" title="RavenDb">RavenDb</a> &amp; <a href="https://github.com/SignalR/SignalR" title="SignalR">SignalR</a> on a daily basis. Thanks to <a href="http://xamarin.com" title="Xamarin">Xamarin</a> C# has never had greater reach; the world has gone mobile and C# is uniquely positioned to provide native UI &amp; performance across iOS, Android &amp; Windows. I&#8217;m a big supporter of the Open Web but this an area I&#8217;m going to dive into in the coming year.</p>
+
+<p>However..</p>
+
+<blockquote><p>Any application that can be written in JavaScript, will eventually be written in JavaScript.</p><footer><strong>Jeff Atwood</strong> <cite><a href='http://www.codinghorror.com/blog/2007/07/the-principle-of-least-power.html'>The Principle of Least Power</a></cite></footer></blockquote>
+
+
+<p>Software is <a href="http://online.wsj.com/article/SB10001424053111903480904576512250915629460.html" title="Marc Andreessen on Why Software Is Eating The World">eating the world</a> and a huge amount of that software is being written in JavaScript. When I started Web development in 2006 IE6 had something like 90% market share and most people considered JavaScript a horribly broken joke of language. When you look how far we&#8217;ve come since 2008 it&#8217;s amazing - Web GL, Sockets, Local Storage, Video, Audio, Transitions, Animations, Geo Location and on and on. It&#8217;s kind of mind blowing what can be done in JavaScript these days, recently the Unreal engine was <a href="https://blog.mozilla.org/blog/2013/03/27/mozilla-is-unlocking-the-power-of-the-web-as-a-platform-for-gaming/" title="asm.js: it's really fast backwards compatible and now in the release version of firefox">ported to ASM in 4 days!</a></p>
+
+<p>Microsoft have also started to take their browser seriously again committing to shortened release schedule and automatic updates. With XP finally coming to <a href="http://www.microsoft.com/en-us/windows/endofsupport.aspx" title="Windows XP End Of Support">end of life</a> we are getting close to the nirvana where the majority of people will eventually be using <a href="http://tomdale.net/2013/05/evergreen-browsers/" title="Evergreen Browsers">evergreen browsers</a>. The pace of development for web standards has been great for the last 5 years but I think we are poised for an explosion of features over the next 5.</p>
+
+<p>It&#8217;s just an incredibly exciting time to be Web developer!</p>
+
+<p>So that&#8217;s it, first post complete and hopefully lots more to come&#8230;</p>
+
+<p><code>rake new_post["who knows?"]</code></p>
+]]></content>
+  </entry>
+  
+</feed>
