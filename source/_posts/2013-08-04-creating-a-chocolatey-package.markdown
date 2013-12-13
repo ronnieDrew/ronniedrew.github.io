@@ -20,7 +20,7 @@ In order to benchmark IO I'm using [SQLIO](http://www.microsoft.com/en-us/downlo
 
 The Chocolatey package really just consists of some meta data in a [nuspec file](https://github.com/chocolatey/chocolatey/wiki/CreatePackages#nuspec), an image to display on the gallery and 2 powershell scripts to silently install/uninstall the SQLIO MSI.
 
-The first thing we need to do is setup a [GitHub repository](https://github.com/ChocolateyPackages) to host my Chocolatey packages. Then we create a directory to hold the sqlio package with the following 4 files.
+The first thing we need to do is setup a [GitHub repository](https://github.com/ronnieDrew/ChocolateyPackages) to host my Chocolatey packages. Then we create a directory to hold the sqlio package with the following 4 files.
 
 ```
 ChocolateyPackages\sqlio\sqlio.nuspec
