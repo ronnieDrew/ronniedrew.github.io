@@ -4,7 +4,7 @@
   <title><![CDATA[Brewing Code]]></title>
   <link href="http://www.brewingcode.com/atom.xml" rel="self"/>
   <link href="http://www.brewingcode.com/"/>
-  <updated>2013-12-09T18:17:05+00:00</updated>
+  <updated>2013-12-13T15:05:21+00:00</updated>
   <id>http://www.brewingcode.com/</id>
   <author>
     <name><![CDATA[Ronan Gibney]]></name>
@@ -12,6 +12,296 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Index Deployment in RavenDb]]></title>
+    <link href="http://www.brewingcode.com/blog/2013/12/13/index-deployment-in-ravendb/"/>
+    <updated>2013-12-13T08:15:00+00:00</updated>
+    <id>http://www.brewingcode.com/blog/2013/12/13/index-deployment-in-ravendb</id>
+    <content type="html"><![CDATA[<p>As I&#8217;ve said before I&#8217;m a big fan of <a href="http://ravendb.net">RavenDb</a>. I remember playing around with Raven for the first time back in 2010 and sitting there with a big smile on my face, it was obvious that a huge amount of work had been put into the developer experience.</p>
+
+<p>Compared to the relational databases I was working with at the time everything just seemed so friction free. That said while Raven is schema free you still can need to include specific steps for it in your deployment process as you would for a relational database. Namely this might include your index definitions or perhaps some kind of document migration.</p>
+
+<!--more-->
+
+
+<p>In Raven while the key/value store is ACID index queries are BASE. Raven uses Lucene for indexes which are pre-computed by background processes as documents arrive which means that query results can be stale until the indexing process catches up with the latest document write activity.</p>
+
+<p>Raven has a lot of smarts built into its query system, you can just perform ad-hoc queries and let Raven determine the appropriate index to use. If an appropriate index doesn&#8217;t exist then Raven will just go ahead and create one on the fly.</p>
+
+<p>That said when you have a large production database you might not want Raven to trigger a huge index rebuild when it receives a new query from your freshly deployed application. Along with ad-hoc indexes Raven also offers the ability to create static indexes.</p>
+
+<p>Below is a simple static index definition.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="k">class</span> <span class="nc">SampleStaticIndex</span> <span class="p">:</span> <span class="n">AbstractIndexCreationTask</span><span class="p">&lt;</span><span class="n">SomeDocument</span><span class="p">&gt;</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="k">public</span> <span class="nf">SampleStaticIndex</span><span class="p">()</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="n">Map</span> <span class="p">=</span> <span class="n">docs</span> <span class="p">=&gt;</span> <span class="k">from</span> <span class="n">someDoc</span> <span class="k">in</span> <span class="n">docs</span>
+</span><span class='line'>                        <span class="k">select</span> <span class="k">new</span> <span class="p">{</span><span class="n">someDoc</span><span class="p">.</span><span class="n">Name</span><span class="p">};</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="n">Index</span><span class="p">(</span><span class="n">x</span><span class="p">=&gt;</span><span class="n">x</span><span class="p">.</span><span class="n">Name</span><span class="p">,</span> <span class="n">FieldIndexing</span><span class="p">.</span><span class="n">Analyzed</span><span class="p">);</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>We can then explicitly query on this index as follows.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="kt">var</span> <span class="n">results</span> <span class="p">=</span> <span class="n">session</span><span class="p">.</span><span class="n">Query</span><span class="p">&lt;</span><span class="n">SomeDocument</span><span class="p">,</span> <span class="n">SampleStaticIndex</span><span class="p">&gt;</span>
+</span><span class='line'>                   <span class="p">.</span><span class="n">Where</span><span class="p">(</span><span class="n">x</span> <span class="p">=&gt;</span> <span class="n">x</span><span class="p">.</span><span class="n">Name</span><span class="p">.</span><span class="n">StartsWith</span><span class="p">(</span><span class="s">&quot;Foo&quot;</span><span class="p">))</span>
+</span><span class='line'>                   <span class="p">.</span><span class="n">ToList</span><span class="p">();</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Finally people then typically add a static index creation task to their Global.asax when the application starts up.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">protected</span> <span class="k">void</span> <span class="nf">Application_Start</span><span class="p">()</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="c1">// ...</span>
+</span><span class='line'>  <span class="n">IndexCreation</span><span class="p">.</span><span class="n">CreateIndexes</span><span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="n">SampleStaticIndex</span><span class="p">).</span><span class="n">Assembly</span><span class="p">,</span> <span class="n">documentStore</span><span class="p">);</span>
+</span><span class='line'>  <span class="c1">// ...</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This is where I feel there is room for improvement, I&#8217;d rather not have index creation / re-builds which are potentially a slow expensive process tied to the start-up on my application. What I&#8217;d prefer is to separate it out into specific step in the deployment process which would be something along the lines of..</p>
+
+<ul>
+<li>Create new indexes across all Raven instances in production. Where an existing index has changed the original index should be left in place. In effect we will have two versions of the index, one that is currently in use by the application and another that will be used by the new version of the application when it is deployed.</li>
+<li>After the indexing process has completed deploy the new version of the application.</li>
+<li>Once we are happy with the release drop any indexes that are no longer in use.</li>
+</ul>
+
+
+<p>A quick search for existing tooling to enable this process lead me to <a href="https://markedup.com/">markedup.com&#8217;s</a> <a href="http://blog.markedup.com/2012/09/introducing-hircine-a-stand-alone-index-builder-for-ravendb/">Hircine</a> tool which is a stand alone index builder for RavenDb. This does almost everything I need however it seems that they have <a href="http://blog.markedup.com/2013/02/cassandra-hive-and-hadoop-how-we-picked-our-analytics-stack/">moved on</a> from Raven so it hasn&#8217;t been updated in quite some time. I thought this morning I&#8217;d do a <a href="https://github.com/ronnieDrew/Hircine">quick spike</a> to add the functionality I&#8217;m looking for to Hircine. The following is a quick run through the changes I made.</p>
+
+<p>The standard index &amp; multi-map index creation tasks now have corresponding &#8220;Versioned&#8221; tasks. These versioned indexes can then be setup in the exact same way as standard static instances but instead you inherit from a different base class, other than that everything works the same from the developers point of view.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="k">class</span> <span class="nc">SampleVersionedIndex</span> <span class="p">:</span> <span class="n">AbstractVersionedIndexCreationTask</span><span class="p">&lt;</span><span class="n">SomeDocument</span><span class="p">&gt;</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="k">public</span> <span class="nf">SampleVersionedIndex</span><span class="p">()</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="n">Map</span> <span class="p">=</span> <span class="n">docs</span> <span class="p">=&gt;</span> <span class="k">from</span> <span class="n">someDoc</span> <span class="k">in</span> <span class="n">docs</span>
+</span><span class='line'>                        <span class="k">select</span> <span class="k">new</span> <span class="p">{</span><span class="n">someDoc</span><span class="p">.</span><span class="n">Name</span><span class="p">};</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="n">Index</span><span class="p">(</span><span class="n">x</span><span class="p">=&gt;</span><span class="n">x</span><span class="p">.</span><span class="n">Name</span><span class="p">,</span> <span class="n">FieldIndexing</span><span class="p">.</span><span class="n">Analyzed</span><span class="p">);</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>To make this work Hircine will have to do the following.</p>
+
+<ul>
+<li>Determine the indexes which requiring versioning during deployment.</li>
+<li>Check if these indexes have existing versions already deployed, if the index definitions differ a new index will be created leaving the existing index intact.</li>
+<li>On request be able to remove versioned indexes that are not currently in use in the application.</li>
+</ul>
+
+
+<p>On the client side we need also to make sure the correct index version is specified when issuing queries.</p>
+
+<p>To achieve this what I did was override the <code>IndexName</code> property in my <code>AbstractVersionedIndexCreationTask</code> &amp; <code>AbstractMultiMapVersionedIndexCreationTask</code> classes. The index name now has the index definition hashcode appended to it so when a definition is changed we should get a new index name. This has the benefit that the Raven client can request the correct index version without having to do any further work.</p>
+
+<p>The interface <code>IVersionedIndex</code> is just added to have an easy way to identify versioned indexes in an assembly and obtain the non-versioned index name. There are four different &#8220;versioned&#8221; creation tasks, each of these implement <code>IVersionedIndex</code>.</p>
+
+<ul>
+<li><code>AbstractVersionedIndexCreationTask&#60;TDocument&#62;</code></li>
+<li><code>AbstractVersionedIndexCreationTask&#60;TDocument, TReduceResult&#62;</code></li>
+<li><code>AbstractMultiMapVersionedIndexCreationTask</code></li>
+<li><code>AbstractMultiMapVersionedIndexCreationTask&#60;TReduceResult&#62;</code></li>
+</ul>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="k">interface</span> <span class="n">IVersionedIndex</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="kt">string</span> <span class="nf">GetIndexNameWithoutVersion</span><span class="p">();</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">public</span> <span class="k">abstract</span> <span class="k">class</span> <span class="nc">AbstractVersionedIndexCreationTask</span><span class="p">&lt;</span><span class="n">TDocument</span><span class="p">&gt;</span> <span class="p">:</span> <span class="n">AbstractIndexCreationTask</span><span class="p">&lt;</span><span class="n">TDocument</span><span class="p">&gt;,</span> <span class="n">IVersionedIndex</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="kt">string</span> <span class="n">_indexName</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">public</span> <span class="k">override</span> <span class="kt">string</span> <span class="n">IndexName</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="k">get</span>
+</span><span class='line'>        <span class="p">{</span>
+</span><span class='line'>            <span class="k">if</span> <span class="p">(</span><span class="kt">string</span><span class="p">.</span><span class="n">IsNullOrEmpty</span><span class="p">(</span><span class="n">_indexName</span><span class="p">))</span>
+</span><span class='line'>                <span class="n">_indexName</span> <span class="p">=</span> <span class="n">VersionIndexName</span><span class="p">.</span><span class="n">Create</span><span class="p">(</span><span class="k">base</span><span class="p">.</span><span class="n">IndexName</span><span class="p">,</span> <span class="n">CreateIndexDefinition</span><span class="p">());</span>
+</span><span class='line'>
+</span><span class='line'>            <span class="k">return</span> <span class="n">_indexName</span><span class="p">;</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>    <span class="k">public</span> <span class="kt">string</span> <span class="nf">GetIndexNameWithoutVersion</span><span class="p">()</span> <span class="p">{</span> <span class="k">return</span> <span class="k">base</span><span class="p">.</span><span class="n">IndexName</span><span class="p">;</span> <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="nc">VersionIndexName</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="k">public</span> <span class="k">static</span> <span class="kt">string</span> <span class="nf">Create</span><span class="p">(</span><span class="kt">string</span> <span class="n">indexName</span><span class="p">,</span> <span class="n">IndexDefinition</span> <span class="n">indexDefinition</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="k">return</span> <span class="n">indexName</span> <span class="p">+</span> <span class="s">&quot;-&quot;</span> <span class="p">+</span> <span class="n">Convert</span><span class="p">.</span><span class="n">ToBase64String</span><span class="p">(</span><span class="n">indexDefinition</span><span class="p">.</span><span class="n">GetIndexHash</span><span class="p">());</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The only change I need to make to Hircine is then to support the deletion of inactive versioned indexes which is fairly straight forward. In the <code>Hicine.Core</code> the <code>IndexBuilder.RunAsync</code> method compiles a list of tasks to create the various required indexes, I&#8217;ve implemented a <code>DropIndexAsync</code> task and when the build instructions <code>DropInactiveVersionedIndexes</code> flag is set to true a set of tasks will be added to delete any inactive indexes.</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+</pre></td><td class='code'><pre><code class='c#'><span class='line'><span class="k">public</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">IndexBuildReport</span><span class="p">&gt;</span> <span class="n">RunAsync</span><span class="p">(</span><span class="n">IndexBuildCommand</span> <span class="n">buildInstructions</span><span class="p">,</span> <span class="n">Action</span><span class="p">&lt;</span><span class="n">IndexBuildResult</span><span class="p">&gt;</span> <span class="n">progressCallBack</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="c1">//Load our indexes</span>
+</span><span class='line'>    <span class="kt">var</span> <span class="n">indexes</span> <span class="p">=</span> <span class="n">GetIndexesFromLoadedAssemblies</span><span class="p">();</span>
+</span><span class='line'>    <span class="kt">var</span> <span class="n">tasks</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">&lt;</span><span class="n">IndexBuildResult</span><span class="p">&gt;&gt;();</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">index</span> <span class="k">in</span> <span class="n">indexes</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="kt">var</span> <span class="n">indexInstance</span> <span class="p">=</span> <span class="p">(</span><span class="n">AbstractIndexCreationTask</span><span class="p">)</span><span class="n">Activator</span><span class="p">.</span><span class="n">CreateInstance</span><span class="p">(</span><span class="n">index</span><span class="p">);</span>
+</span><span class='line'>        <span class="n">tasks</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">BuildIndexAsync</span><span class="p">(</span><span class="n">indexInstance</span><span class="p">,</span> <span class="n">progressCallBack</span><span class="p">));</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">if</span> <span class="p">(</span><span class="n">buildInstructions</span><span class="p">.</span><span class="n">DropInactiveVersionedIndexes</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="kt">var</span> <span class="n">versionedIndexes</span> <span class="p">=</span> <span class="n">GetVersionedIndexesFromLoadedAssemblies</span><span class="p">();</span>
+</span><span class='line'>        <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">indexType</span> <span class="k">in</span> <span class="n">versionedIndexes</span><span class="p">)</span>
+</span><span class='line'>        <span class="p">{</span>
+</span><span class='line'>            <span class="kt">var</span> <span class="n">index</span> <span class="p">=</span> <span class="p">(</span><span class="n">AbstractIndexCreationTask</span><span class="p">)</span><span class="n">Activator</span><span class="p">.</span><span class="n">CreateInstance</span><span class="p">(</span><span class="n">indexType</span><span class="p">);</span>
+</span><span class='line'>            <span class="kt">var</span> <span class="n">nonVersionedIndexName</span> <span class="p">=</span> <span class="p">((</span><span class="n">IVersionedIndex</span><span class="p">)</span><span class="n">index</span><span class="p">).</span><span class="n">GetIndexNameWithoutVersion</span><span class="p">();</span>
+</span><span class='line'>            <span class="kt">var</span> <span class="n">inactiveIndexes</span> <span class="p">=</span> <span class="n">_documentStore</span><span class="p">.</span><span class="n">DatabaseCommands</span>
+</span><span class='line'>                                    <span class="p">.</span><span class="n">GetStatistics</span><span class="p">()</span>
+</span><span class='line'>                                    <span class="p">.</span><span class="n">Indexes</span>
+</span><span class='line'>                                    <span class="p">.</span><span class="n">Where</span><span class="p">(</span><span class="n">x</span> <span class="p">=&gt;</span> <span class="n">x</span><span class="p">.</span><span class="n">Name</span><span class="p">.</span><span class="n">StartsWith</span><span class="p">(</span><span class="n">nonVersionedIndexName</span><span class="p">)</span> <span class="p">&amp;&amp;</span>
+</span><span class='line'>                                                <span class="n">x</span><span class="p">.</span><span class="n">Name</span><span class="p">.</span><span class="n">Equals</span><span class="p">(</span><span class="n">index</span><span class="p">.</span><span class="n">IndexName</span><span class="p">)</span> <span class="p">==</span> <span class="k">false</span>
+</span><span class='line'>                                    <span class="p">).</span><span class="n">ToList</span><span class="p">();</span>
+</span><span class='line'>
+</span><span class='line'>            <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">indexToDrop</span> <span class="k">in</span> <span class="n">inactiveIndexes</span><span class="p">)</span>
+</span><span class='line'>            <span class="p">{</span>
+</span><span class='line'>                <span class="n">tasks</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="n">DropIndexAsync</span><span class="p">(</span><span class="n">indexToDrop</span><span class="p">.</span><span class="n">Name</span><span class="p">,</span> <span class="n">progressCallBack</span><span class="p">));</span>
+</span><span class='line'>            <span class="p">}</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">return</span> <span class="n">Task</span><span class="p">.</span><span class="n">Factory</span><span class="p">.</span><span class="n">ContinueWhenAll</span><span class="p">(</span><span class="n">tasks</span><span class="p">.</span><span class="n">ToArray</span><span class="p">(),</span> <span class="n">cont</span> <span class="p">=&gt;</span>
+</span><span class='line'>    <span class="p">{</span>
+</span><span class='line'>        <span class="kt">var</span> <span class="n">buildReport</span> <span class="p">=</span> <span class="k">new</span> <span class="n">IndexBuildReport</span><span class="p">()</span>
+</span><span class='line'>        <span class="p">{</span>
+</span><span class='line'>            <span class="n">BuildResults</span> <span class="p">=</span> <span class="n">tasks</span><span class="p">.</span><span class="n">Select</span><span class="p">(</span><span class="n">x</span> <span class="p">=&gt;</span> <span class="n">x</span><span class="p">.</span><span class="n">Result</span><span class="p">).</span><span class="n">ToList</span><span class="p">()</span>
+</span><span class='line'>        <span class="p">};</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="k">return</span> <span class="n">buildReport</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">});</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>All in all I&#8217;m not sure how I feel about this spike. Including the index definition hash in the index name smells wrong. Firstly you have a bunch of gibberish appended to the index name and it wouldn&#8217;t be obvious in the management studio which index is actually the active one. Secondly hash codes are not guaranteed to be unique so I guess there&#8217;s the chance that an index definition could be changed but have the same hash as the existing version, in this case the index would get updated with the latest definition.</p>
+
+<p>That said where you have indexes that operate over large numbers of documents and take significant time to rebuild it would be nice to have something similar to this.</p>
+
+<p>The code for this spike is here - <a href="https://github.com/ronnieDrew/Hircine">https://github.com/ronnieDrew/Hircine</a></p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Windows Azure Table Explorer]]></title>
@@ -1838,7 +2128,7 @@
 
 <p>The Chocolatey package really just consists of some meta data in a <a href="https://github.com/chocolatey/chocolatey/wiki/CreatePackages#nuspec">nuspec file</a>, an image to display on the gallery and 2 powershell scripts to silently install/uninstall the SQLIO MSI.</p>
 
-<p>The first thing we need to do is setup a <a href="https://github.com/ChocolateyPackages">GitHub repository</a> to host my Chocolatey packages. Then we create a directory to hold the sqlio package with the following 4 files.</p>
+<p>The first thing we need to do is setup a <a href="https://github.com/ronnieDrew/ChocolateyPackages">GitHub repository</a> to host my Chocolatey packages. Then we create a directory to hold the sqlio package with the following 4 files.</p>
 
 <figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>

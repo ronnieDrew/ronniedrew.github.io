@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Chocolatey | Brewing Code]]></title>
   <link href="http://www.brewingcode.com/blog/categories/chocolatey/atom.xml" rel="self"/>
   <link href="http://www.brewingcode.com/"/>
-  <updated>2013-12-09T18:17:05+00:00</updated>
+  <updated>2013-12-13T15:05:21+00:00</updated>
   <id>http://www.brewingcode.com/</id>
   <author>
     <name><![CDATA[Ronan Gibney]]></name>
@@ -33,7 +33,7 @@
 
 <p>The Chocolatey package really just consists of some meta data in a <a href="https://github.com/chocolatey/chocolatey/wiki/CreatePackages#nuspec">nuspec file</a>, an image to display on the gallery and 2 powershell scripts to silently install/uninstall the SQLIO MSI.</p>
 
-<p>The first thing we need to do is setup a <a href="https://github.com/ChocolateyPackages">GitHub repository</a> to host my Chocolatey packages. Then we create a directory to hold the sqlio package with the following 4 files.</p>
+<p>The first thing we need to do is setup a <a href="https://github.com/ronnieDrew/ChocolateyPackages">GitHub repository</a> to host my Chocolatey packages. Then we create a directory to hold the sqlio package with the following 4 files.</p>
 
 <p><code>
 ChocolateyPackages\sqlio\sqlio.nuspec
