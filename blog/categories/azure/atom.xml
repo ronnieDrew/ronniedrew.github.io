@@ -4,11 +4,11 @@
   <title><![CDATA[Category: Azure | Brewing Code]]></title>
   <link href="http://www.brewingcode.com/blog/categories/azure/atom.xml" rel="self"/>
   <link href="http://www.brewingcode.com/"/>
-  <updated>2013-12-13T15:05:21+00:00</updated>
+  <updated>2015-12-15T10:49:22+00:00</updated>
   <id>http://www.brewingcode.com/</id>
   <author>
     <name><![CDATA[Ronan Gibney]]></name>
-    
+    <email><![CDATA[ronnieDrew@gmail.com]]></email>
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
@@ -16,7 +16,7 @@
   <entry>
     <title type="html"><![CDATA[Windows Azure Table Explorer]]></title>
     <link href="http://www.brewingcode.com/blog/2013/08/10/windows-azure-table-explorer/"/>
-    <updated>2013-08-10T09:04:00+01:00</updated>
+    <updated>2013-08-10T09:04:00+00:00</updated>
     <id>http://www.brewingcode.com/blog/2013/08/10/windows-azure-table-explorer</id>
     <content type="html"><![CDATA[<p>This morning I was reading back over the archives of Jeff Wilcox's blog and came across <a href="http://www.jeff.wilcox.name/2013/04/windows-azure-table-explorer/">this post</a> detailing a Single Page App that he built for browsing table service data on an Azure storage account.</p>
 
@@ -34,63 +34,54 @@
 <p>Jeff is using the <a href="https://github.com/WindowsAzure/azure-sdk-for-node">Windows Azure SDK for Node</a> to build a simple API in Node for his client side app. All requests to this API need to provide credentials which are the storage account name and access key, invalid credentials are rejected with a HTTP 401 error.</p>
 
 <p><code>GET /json/table/?account={storage-account}&amp;key={storage-key}</code> - returns a list of tables defined on the storage account.
-``` json Response
+<code>json Response
 {
   "ok":true,
-  "result":{</p>
-
-<pre><code>"tables":["logs","people"],
-"name":"brewingcode"
-</code></pre>
-
-<p>  }
+  "result":{
+    "tables":["logs","people"],
+    "name":"brewingcode"
+  }
 }
-```</p>
+</code></p>
 
 <p><code>GET /json/table/{table-name}?account={storage-account}&amp;key={storage-key}&amp;top={results-per-page}&amp;nextPartitionKey={partition-key}&amp;nextRowKey={row-key}</code> - returns a number of records specified by the <code>top</code> parameter for the specified table. If more records are available a continuation token will also be returned, this can the be used in subsequent requests to page through remaining records via the optional <code>nextPartitionKey</code> &amp; <code>nextRowKey</code> parameters.
-``` json Response
+<code>json Response
 {
   "ok":true,
-  "table":{</p>
-
-<pre><code>"continuation":{"nextPartitionKey":"1!8!bG9ncw--","nextRowKey":"1!4!Mjc-"},
-"rows":[
-  {
-    "_":{
-      "id":"https://brewingcode.table.core.windows.net/logs(PartitionKey='logs',RowKey='18')",
-      "link":"logs(PartitionKey='logs',RowKey='18')",
-      "updated":"2013-12-05T15:26:07Z",
-      "etag":"W/\"datetime'2013-11-18T16%3A09%3A20.1183355Z'\""},
-      "PartitionKey":"logs",
-      "RowKey":"18",
-      "Timestamp":"2013-11-18T16:09:20.118Z",
-      "Level":"info",
-      "Message":"Message - 18"
-    },
-    // ...
-]
-</code></pre>
-
-<p>  }
+  "table":{
+    "continuation":{"nextPartitionKey":"1!8!bG9ncw--","nextRowKey":"1!4!Mjc-"},
+    "rows":[
+      {
+        "_":{
+          "id":"https://brewingcode.table.core.windows.net/logs(PartitionKey='logs',RowKey='18')",
+          "link":"logs(PartitionKey='logs',RowKey='18')",
+          "updated":"2013-12-05T15:26:07Z",
+          "etag":"W/\"datetime'2013-11-18T16%3A09%3A20.1183355Z'\""},
+          "PartitionKey":"logs",
+          "RowKey":"18",
+          "Timestamp":"2013-11-18T16:09:20.118Z",
+          "Level":"info",
+          "Message":"Message - 18"
+        },
+        // ...
+    ]
+  }
 }
-```</p>
+</code></p>
 
 <p><code>DELETE /json/table/{table-name}/{partition-key}/{row-key}?account={storage-account}&amp;key={storage-key}</code> - deletes the specified row from the table.
-``` json Response
+<code>json Response
 {
   "ok":true,
-  "response":{</p>
-
-<pre><code>"isSuccessful":true,
-"statusCode":204,
-"headers":{
-  // ...
+  "response":{
+    "isSuccessful":true,
+    "statusCode":204,
+    "headers":{
+      // ...
+    }
+  }
 }
-</code></pre>
-
-<p>  }
-}
-```</p>
+</code></p>
 
 <h2>Front end</h2>
 
@@ -118,23 +109,20 @@
 
 <p>On Windows assuming you have <a href="http://chocolatey.org/">Chocolatey</a> installed (and if not why not?) then getting Yeoman installed is as simple as...</p>
 
-<p><code>powershell
-cinst Yeoman
-</code></p>
+<pre><code class="powershell">cinst Yeoman
+</code></pre>
 
 <p>With Yeoman installed next we'll want to add the scaffolding support for the Ember tools.</p>
 
-<p><code>powershell
-npm install -g generator-ember
-</code></p>
+<pre><code class="powershell">npm install -g generator-ember
+</code></pre>
 
 <p>With that we'll create a directory for our app and use the Yeoman scaffolding tools for Ember to create a basic structure.</p>
 
-<p><code>powershell
-mkdir emberapp
+<pre><code class="powershell">mkdir emberapp
 cd emberapp
 yo ember
-</code></p>
+</code></pre>
 
 <p>This will create the directory structure seen below.</p>
 
@@ -147,7 +135,7 @@ yo ember
 <li><code>Grunt.js</code> - the Grunt file contains the build scripts for our application, specifically we'll be using the following commands.
 
 <ul>
-<li><code>grunt server</code> - runs your application in preview mode at <code>http://localhost:4000</code>. The file system is monitored for changes and the application is re-built as required.</li>
+<li><code>grunt server</code> - runs your application in preview mode at <code><a href="http://localhost:4000">http://localhost:4000</a></code>. The file system is monitored for changes and the application is re-built as required.</li>
 <li><code>grunt test</code> - runs your application unit tests inside <a href="http://phantomjs.org">PhantomJS</a></li>
 <li><code>grunt</code> - builds the application in release mode and ready for deployment, the output of this task is created in the <code>dist</code> directory.</li>
 </ul>
@@ -161,19 +149,15 @@ yo ember
 
 <p>Before we use <code>npm install</code> to get all the required node modules for our application we need to make a small alternation to the <code>packages.json</code> that was just created the <code>emberapp</code> directory. There is problem with the <code>grunt-contrib-imagemin</code> module on Windows. It depends on <code>jpegtran-bin</code> and the latest version of this can't be built from source on Windows and thus installed via npm. Instead we can specify the previous version in the <code>package.json</code>, this should be above <code>grunt-contrib-imagemin</code>.</p>
 
-<p>``` json packages.json</p>
-
-<pre><code>// ...
-"jpegtran-bin": "0.2.0",
-"grunt-contrib-imagemin": "~0.2.0",
-// ...
+<pre><code class="json packages.json">    // ...
+    "jpegtran-bin": "0.2.0",
+    "grunt-contrib-imagemin": "~0.2.0",
+    // ...
 </code></pre>
-
-<p>```</p>
 
 <p>With this alteration in place you can go ahead and run <code>npm install</code> to get all the required dependencies.</p>
 
-<p>So at this point we will have the basic structure of our Ember app scaffolded out and everything is ready to be built and run. We can boot the app with the <code>grunt server</code> command, this will run the app on <code>http://localhost:4000</code>.</p>
+<p>So at this point we will have the basic structure of our Ember app scaffolded out and everything is ready to be built and run. We can boot the app with the <code>grunt server</code> command, this will run the app on <code><a href="http://localhost:4000">http://localhost:4000</a></code>.</p>
 
 <h3>Ember Concepts</h3>
 
@@ -205,140 +189,141 @@ yo ember
 
 <p>An excerpt of the index.html file is listed below, the important parts are the <code>build:js</code> snippets. Yeoman uses these markers to insert Bower libraries, Handlebars templates and the application source itself. Depending on the grunt task executed what's injected into these placeholders will be different, for example when running <code>grunt</code> the application is built in release mode and so files are concatenated, minified &amp; uglified.</p>
 
-<p>``` html index.html
-&lt;!DOCTYPE html></p>
-
-<pre><code>// ...
-&lt;body&gt;
-    &lt;!-- build:js scripts/components.js --&gt;
-    &lt;script src="bower_components/jquery/jquery.js"&gt;&lt;/script&gt;
-    &lt;script src="bower_components/momentjs/moment.js"&gt;&lt;/script&gt;        
-    &lt;script src="bower_components/underscore/underscore.js"&gt;&lt;/script&gt;
-    &lt;script src="bower_components/handlebars/handlebars.runtime.js"&gt;&lt;/script&gt;
-    &lt;script src="bower_components/ember/ember.js"&gt;&lt;/script&gt;
-    &lt;!-- endbuild --&gt;
-
-    &lt;!-- build:js(.tmp) scripts/templates.js --&gt;
-    &lt;script src="scripts/compiled-templates.js"&gt;&lt;/script&gt;
-    &lt;!-- endbuild --&gt;
-
-    &lt;!-- build:js(.tmp) scripts/main.js --&gt;
-    &lt;script src="scripts/combined-scripts.js"&gt;&lt;/script&gt;
-    &lt;!-- endbuild --&gt;
-
-    &lt;!-- build:js scripts/plugins.js --&gt;
-    &lt;script src="bower_components/bootstrap-sass/js/bootstrap-affix.js"&gt;&lt;/script&gt;
-    &lt;script src="bower_components/bootstrap-sass/js/bootstrap-alert.js"&gt;&lt;/script&gt;
+<pre><code class="html index.html">&lt;!DOCTYPE html&gt;
     // ...
-    &lt;!-- endbuild --&gt;
-&lt;/body&gt;
-</code></pre>
+    &lt;body&gt;
+        &lt;!-- build:js scripts/components.js --&gt;
+        &lt;script src="bower_components/jquery/jquery.js"&gt;&lt;/script&gt;
+        &lt;script src="bower_components/momentjs/moment.js"&gt;&lt;/script&gt;        
+        &lt;script src="bower_components/underscore/underscore.js"&gt;&lt;/script&gt;
+        &lt;script src="bower_components/handlebars/handlebars.runtime.js"&gt;&lt;/script&gt;
+        &lt;script src="bower_components/ember/ember.js"&gt;&lt;/script&gt;
+        &lt;!-- endbuild --&gt;
 
-<p></html>
-```</p>
+        &lt;!-- build:js(.tmp) scripts/templates.js --&gt;
+        &lt;script src="scripts/compiled-templates.js"&gt;&lt;/script&gt;
+        &lt;!-- endbuild --&gt;
+
+        &lt;!-- build:js(.tmp) scripts/main.js --&gt;
+        &lt;script src="scripts/combined-scripts.js"&gt;&lt;/script&gt;
+        &lt;!-- endbuild --&gt;
+
+        &lt;!-- build:js scripts/plugins.js --&gt;
+        &lt;script src="bower_components/bootstrap-sass/js/bootstrap-affix.js"&gt;&lt;/script&gt;
+        &lt;script src="bower_components/bootstrap-sass/js/bootstrap-alert.js"&gt;&lt;/script&gt;
+        // ...
+        &lt;!-- endbuild --&gt;
+    &lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
 
 <h2>Replacing jQuery with Ember</h2>
 
 <p>The first thing you want to do when starting an Ember app is to get your routes defined. Below are the route definitions for the app, I've also included comments for routes that Ember will create by itself. Ember is a very convention based framework and in particular route names are important as these are used in the controller, model, route &amp; template naming conventions.</p>
 
-<p>``` javascript Application Routes
-App.Router.map(function () {</p>
+<pre><code class="javascript Application Routes">App.Router.map(function () {
 
-<p>  // application
-  // index</p>
+  // application
+  // index
 
-<p>  this.resource("tables", function() {</p>
+  this.resource("tables", function() {
+    // tables.index
 
-<pre><code>// tables.index
+    this.resource("table", { path: ":table_id" }, function() {
+      // table.index
 
-this.resource("table", { path: ":table_id" }, function() {
-  // table.index
+      this.route("page", { path: ":page_id" } );
+    });
+  });
 
-  this.route("page", { path: ":page_id" } );
 });
 </code></pre>
-
-<p>  });</p>
-
-<p>});
-```</p>
 
 <p>With these routes defined we can start fleshing out the templates and layout of our application. The <code>application.hbs</code> template will be rendered by Ember when your application starts so it's the place to define your page layout structure. The header and footer sections have been created as separate template fragments <code><em>header.hbs</code> and <code></em>footer.hbs</code> and are included using the <code>{{partial "{template-name}"}}</code> helper. Note that partial templates must always be named with an underscore prefix however this prefix is excluded when using the partial helper. e.g. A partial template <code>_header.hbs</code> is included in a template using <code>{{partial "header"}}</code>. Also the binding context of the partial is not changed, the fragment is just treated as if it were inline with the main template.</p>
 
 <p>Along with partials we also have two outlets defined in this template. Outlets are just placeholders that other templates can be rendered into. Templates can have a single default outlet which is not given a name, if a template has multiple outlets then the non-default items must be allocated unique names. In this case we have a separate outlet for modal dialogs which will be covered later in the post.</p>
 
 <p>
-``` html application.hbs
-{{partial "header"}}</p>
-
-<div class="container">
-
-    {{outlet}}
-
-    <hr/>
-
-    {{partial "footer"}}
-
-</div>
-
-
-<p>{{outlet "modalOutlet"}}
-```
+<figure class='code'><figcaption><span>application.hbs</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'>{{partial &quot;header&quot;}}<span class="nt">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&quot;container&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>
+</span><span class='line'>    {{outlet}}
+</span><span class='line'>
+</span><span class='line'>    <span class="nt">&lt;hr/&gt;</span>
+</span><span class='line'>
+</span><span class='line'>    {{partial &quot;footer&quot;}}
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;/div&gt;</span>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;p&gt;</span>{{outlet &quot;modalOutlet&quot;}}
+</span></code></pre></td></tr></table></div></figure>
 </p>
 
 <p>The next default template that Ember will render is the <code>index.hbs</code> template. As we want the landing page of our application to be the credentials/login screen we will create an <code>IndexController</code> that will be bound to this template and control the credentials/login process.</p>
 
-<p>``` javascript IndexController.js
-App.IndexController = Ember.ObjectController.extend({</p>
+<pre><code class="javascript IndexController.js">App.IndexController = Ember.ObjectController.extend({
+    storageAccount: "",
+    storageKey: "",
+    attemptedTransition: null,
+    credentials: null,
 
-<pre><code>storageAccount: "",
-storageKey: "",
-attemptedTransition: null,
-credentials: null,
+    usingSSL: function() {
+        return (document.location.protocol === "https:");
+    }.property(),
 
-usingSSL: function() {
-    return (document.location.protocol === "https:");
-}.property(),
+    loginDisabled: function() {
+        var credentials = this.getProperties("storageAccount", "storageKey");
 
-loginDisabled: function() {
-    var credentials = this.getProperties("storageAccount", "storageKey");
-
-    if (credentials.storageAccount.length &gt; 0 &amp;&amp; credentials.storageKey.length &gt; 0 ) {
-        return false;
-    }
-
-    return true;
-
-}.property("storageAccount", "storageKey"),
-
-login: function() {
-    var self = this,
-        credentials = this.getProperties("storageAccount", "storageKey"),
-        attemptedTransition = this.get("attemptedTransition"),
-        tables = App.Tables.find(credentials);
-
-    tables.then(function(data) {
-        // success
-        self.set("credentials", credentials);
-
-        if (attemptedTransition) {
-            attemptedTransition.retry();
-            self.set("attemptedTransition", null);
-        } else {
-            self.transitionToRoute("tables.index");
+        if (credentials.storageAccount.length &gt; 0 &amp;&amp; credentials.storageKey.length &gt; 0 ) {
+            return false;
         }
 
-    }, function(reason) {
-        // failure
-        self.set("credentials", null);
-        self.send("error", reason);
-    });
+        return true;
 
-}
+    }.property("storageAccount", "storageKey"),
+
+    login: function() {
+        var self = this,
+            credentials = this.getProperties("storageAccount", "storageKey"),
+            attemptedTransition = this.get("attemptedTransition"),
+            tables = App.Tables.find(credentials);
+
+        tables.then(function(data) {
+            // success
+            self.set("credentials", credentials);
+
+            if (attemptedTransition) {
+                attemptedTransition.retry();
+                self.set("attemptedTransition", null);
+            } else {
+                self.transitionToRoute("tables.index");
+            }
+
+        }, function(reason) {
+            // failure
+            self.set("credentials", null);
+            self.send("error", reason);
+        });
+
+    }
+});
 </code></pre>
-
-<p>});
-```</p>
 
 <ul>
 <li><code>storageAccount</code> - bound to the corresponding input element in the template.</li>
@@ -358,160 +343,227 @@ login: function() {
 <p>Finally the click action on the "Explore" button is set to be handled by the <code>login</code> function on our controller.</p>
 
 <p>
-``` html index.hbs</p>
-
-<div id="credentials" class="hero-unit">
-  <h1>Explore a storage account</h1>
-  
-  <div id="nossl" {{bindAttr class=":alert :alert-block usingSSL:hide:show"}}>
-    <h4>Security Warning!</h4>
-    <p>You are not currently browsing this site through an encrypted SSL session. If you submit your 
-    Windows Azure storage account name and access key, this information will be sent over the 
-    wire unencrypted. Don't do it. Please.</p>
-  </div>
-
-  <p id="ssl" {{bindAttr class="usingSSL:show:hide"}}>
-    You're using an SSL connection with this cloud service - your credentials will be transmitted securely. The credentials are sent with every dynamic request and immediately destroyed.
-  </p>
-
-  <p>
-    {{view Ember.TextField valueBinding="storageAccount" placeholder="Storage account" class="span5"}}
-  </p>
-
-  <div class="input-prepend">
-    <span class="add-on"><i class="icon-lock"></i></span>
-    {{view Ember.TextField valueBinding="storageKey" placeholder="Access account" type="password" class="span5"}}
-  </div>
-  
-  <p>
-    <button class="btn btn-primary" {{action login}} {{bindAttr disabled="loginDisabled"}} id="setCredentials">Explore &raquo;</button> 
-    <a href="https://github.com/jeffwilcox/azure-table-explorer" class="btn" target="_blank">App source &raquo;</a>
-  </p>
-</div>
-
-
-<p>```
-</p>
-
-<h4>Models</h4>
-
-<p>In order to build out the rest of the application we'll need to go ahead and create the various models that we will need we are..</p>
-
-<ul>
-<li><code>Tables</code> - storage account details and a list of associated tables.</li>
-<li><code>Table</code> - table id and a list of continuation tokens that are required for pagination.</li>
-<li><code>Page</code> - A set of rows for a particular table.</li>
-<li><code>Row</code> - A individual table record.</li>
-</ul>
-
-
-<p>As we are not using Ember Data we'll just extend <code>Ember.Object</code> when creating our models. The <code>Ember.Object.extend</code> method is used to define properties for each model, once defined an instance of the <code>Tables</code> model can be created using the <code>App.Tables.create</code> method. The <code>reopenClass</code> method can be used to add static properties and methods to the model.</p>
-
-<p>``` javascript Tables.js
-App.Tables = Ember.Object.extend({</p>
-
-<pre><code>id: null,
-tables: null
-</code></pre>
-
-<p>});</p>
-
-<p>App.Tables.reopenClass({
-  find: function(credentials) {</p>
-
-<pre><code>var requestData = {
-  account: credentials.storageKey ? credentials.storageAccount : undefined,
-  key: credentials.storageKey,
-  top: 10
-};
-
-return Ember.RSVP.Promise(function(resolve, reject) {
-
-    App.ajax("/json/table", {data: requestData}).then(function(value) {
-      // success
-      resolve(
-        App.Tables.create({
-          id: value.result.name,
-          tables: _.map(value.result.tables, function(item) {
-            return App.Table.create({id: item});
-          })
-        })
-      );
-    }, function(error) {
-      // fail
-      reject(error);
-    });
-
-});
-</code></pre>
-
-<p>  }
-});
-```
+<figure class='code'><figcaption><span>index.hbs</p></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+<span class='line-number'>59</span>
+<span class='line-number'>60</span>
+<span class='line-number'>61</span>
+<span class='line-number'>62</span>
+<span class='line-number'>63</span>
+<span class='line-number'>64</span>
+<span class='line-number'>65</span>
+<span class='line-number'>66</span>
+<span class='line-number'>67</span>
+<span class='line-number'>68</span>
+<span class='line-number'>69</span>
+<span class='line-number'>70</span>
+<span class='line-number'>71</span>
+<span class='line-number'>72</span>
+<span class='line-number'>73</span>
+<span class='line-number'>74</span>
+<span class='line-number'>75</span>
+<span class='line-number'>76</span>
+<span class='line-number'>77</span>
+<span class='line-number'>78</span>
+<span class='line-number'>79</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;div</span> <span class="na">id=</span><span class="s">&quot;credentials&quot;</span> <span class="na">class=</span><span class="s">&quot;hero-unit&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;h1&gt;</span>Explore a storage account<span class="nt">&lt;/h1&gt;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nt">&lt;div</span> <span class="na">id=</span><span class="s">&quot;nossl&quot;</span> <span class="err">{{</span><span class="na">bindAttr</span> <span class="na">class=</span><span class="s">&quot;:alert :alert-block usingSSL:hide:show&quot;</span><span class="err">}}</span><span class="nt">&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;h4&gt;</span>Security Warning!<span class="nt">&lt;/h4&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;p&gt;</span>You are not currently browsing this site through an encrypted SSL session. If you submit your
+</span><span class='line'>    Windows Azure storage account name and access key, this information will be sent over the
+</span><span class='line'>    wire unencrypted. Don&#39;t do it. Please.<span class="nt">&lt;/p&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;/div&gt;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nt">&lt;p</span> <span class="na">id=</span><span class="s">&quot;ssl&quot;</span> <span class="err">{{</span><span class="na">bindAttr</span> <span class="na">class=</span><span class="s">&quot;usingSSL:show:hide&quot;</span><span class="err">}}</span><span class="nt">&gt;</span>
+</span><span class='line'>    You&#39;re using an SSL connection with this cloud service - your credentials will be transmitted securely. The credentials are sent with every dynamic request and immediately destroyed.
+</span><span class='line'>  <span class="nt">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nt">&lt;p&gt;</span>
+</span><span class='line'>    {{view Ember.TextField valueBinding=&quot;storageAccount&quot; placeholder=&quot;Storage account&quot; class=&quot;span5&quot;}}
+</span><span class='line'>  <span class="nt">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&quot;input-prepend&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">&quot;add-on&quot;</span><span class="nt">&gt;&lt;i</span> <span class="na">class=</span><span class="s">&quot;icon-lock&quot;</span><span class="nt">&gt;&lt;/i&gt;&lt;/span&gt;</span>
+</span><span class='line'>    {{view Ember.TextField valueBinding=&quot;storageKey&quot; placeholder=&quot;Access account&quot; type=&quot;password&quot; class=&quot;span5&quot;}}
+</span><span class='line'>  <span class="nt">&lt;/div&gt;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nt">&lt;p&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;button</span> <span class="na">class=</span><span class="s">&quot;btn btn-primary&quot;</span> <span class="err">{{</span><span class="na">action</span> <span class="na">login</span><span class="err">}}</span> <span class="err">{{</span><span class="na">bindAttr</span> <span class="na">disabled=</span><span class="s">&quot;loginDisabled&quot;</span><span class="err">}}</span> <span class="na">id=</span><span class="s">&quot;setCredentials&quot;</span><span class="nt">&gt;</span>Explore <span class="ni">&amp;raquo;</span><span class="nt">&lt;/button&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;a</span> <span class="na">href=</span><span class="s">&quot;https://github.com/jeffwilcox/azure-table-explorer&quot;</span> <span class="na">class=</span><span class="s">&quot;btn&quot;</span> <span class="na">target=</span><span class="s">&quot;_blank&quot;</span><span class="nt">&gt;</span>App source <span class="ni">&amp;raquo;</span><span class="nt">&lt;/a&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;/p&gt;</span>
+</span><span class='line'><span class="nt">&lt;/div&gt;</span>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;pre&gt;&lt;code&gt;</span>
+</span><span class='line'>
+</span><span class='line'>####Models
+</span><span class='line'>In order to build out the rest of the application we&#39;ll need to go ahead and create the various models that we will need we are..
+</span><span class='line'>
+</span><span class='line'>* <span class="ni">&amp;lt;</span>code<span class="ni">&amp;gt;</span>Tables<span class="ni">&amp;lt;</span>/code<span class="ni">&amp;gt;</span> - storage account details and a list of associated tables.
+</span><span class='line'>* <span class="ni">&amp;lt;</span>code<span class="ni">&amp;gt;</span>Table<span class="ni">&amp;lt;</span>/code<span class="ni">&amp;gt;</span> - table id and a list of continuation tokens that are required for pagination.
+</span><span class='line'>* <span class="ni">&amp;lt;</span>code<span class="ni">&amp;gt;</span>Page<span class="ni">&amp;lt;</span>/code<span class="ni">&amp;gt;</span> - A set of rows for a particular table.
+</span><span class='line'>* <span class="ni">&amp;lt;</span>code<span class="ni">&amp;gt;</span>Row<span class="ni">&amp;lt;</span>/code<span class="ni">&amp;gt;</span> - A individual table record.
+</span><span class='line'>
+</span><span class='line'>As we are not using Ember Data we&#39;ll just extend <span class="ni">&amp;lt;</span>code<span class="ni">&amp;gt;</span>Ember.Object<span class="ni">&amp;lt;</span>/code<span class="ni">&amp;gt;</span> when creating our models. The <span class="ni">&amp;lt;</span>code<span class="ni">&amp;gt;</span>Ember.Object.extend<span class="ni">&amp;lt;</span>/code<span class="ni">&amp;gt;</span> method is used to define properties for each model, once defined an instance of the <span class="ni">&amp;lt;</span>code<span class="ni">&amp;gt;</span>Tables<span class="ni">&amp;lt;</span>/code<span class="ni">&amp;gt;</span> model can be created using the <span class="ni">&amp;lt;</span>code<span class="ni">&amp;gt;</span>App.Tables.create<span class="ni">&amp;lt;</span>/code<span class="ni">&amp;gt;</span> method. The <span class="ni">&amp;lt;</span>code<span class="ni">&amp;gt;</span>reopenClass<span class="ni">&amp;lt;</span>/code<span class="ni">&amp;gt;</span> method can be used to add static properties and methods to the model.
+</span><span class='line'><span class="nt">&lt;/code&gt;&lt;/pre&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;p&gt;</span>App.Tables = Ember.Object.extend({
+</span><span class='line'>    id: null,
+</span><span class='line'>    tables: null
+</span><span class='line'>});<span class="nt">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;p&gt;</span>App.Tables.reopenClass({
+</span><span class='line'>  find: function(credentials) {<span class="nt">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;pre&gt;&lt;code&gt;</span>var requestData = {
+</span><span class='line'>  account: credentials.storageKey ? credentials.storageAccount : undefined,
+</span><span class='line'>  key: credentials.storageKey,
+</span><span class='line'>  top: 10
+</span><span class='line'>};
+</span><span class='line'>
+</span><span class='line'>return Ember.RSVP.Promise(function(resolve, reject) {
+</span><span class='line'>
+</span><span class='line'>    App.ajax(&quot;/json/table&quot;, {data: requestData}).then(function(value) {
+</span><span class='line'>      // success
+</span><span class='line'>      resolve(
+</span><span class='line'>        App.Tables.create({
+</span><span class='line'>          id: value.result.name,
+</span><span class='line'>          tables: _.map(value.result.tables, function(item) {
+</span><span class='line'>            return App.Table.create({id: item});
+</span><span class='line'>          })
+</span><span class='line'>        })
+</span><span class='line'>      );
+</span><span class='line'>    }, function(error) {
+</span><span class='line'>      // fail
+</span><span class='line'>      reject(error);
+</span><span class='line'>    });
+</span><span class='line'>
+</span><span class='line'>});
+</span><span class='line'><span class="nt">&lt;/code&gt;&lt;/pre&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;p&gt;</span>  }
+</span><span class='line'>});
+</span></code></pre></td></tr></table></div></figure>
 * <code>id</code> - the storage account name.
 * <code>tables</code> - a list of <code>App.Table</code> objects.
 * <code>find</code> - uses an internal Ajax helper to make the API request, this helper returns a promise. The <code>find</code> method itself returns a promise that wraps that returned by the ajax helper, when the ajax promise resolves the JSON response is unpacked and converted into an <code>App.Tables</code> instance.</p>
 
-<p>``` javascript Table.js
-App.Table = Ember.Object.extend({</p>
-
-<pre><code>id: null,
-</code></pre>
-
-<p>  continuationTokens: null
+<pre><code class="javascript Table.js">App.Table = Ember.Object.extend({
+    id: null,
+  continuationTokens: null
 });
-```
-* <code>id</code> - the table name, this is unique within the storage account.
-* <code>continuationTokens</code> - a list of continuation tokens that are required for pagination. This will be covered in more detail later in the post.</p>
-
-<p>``` javascript Page.js
-App.Page = Ember.Object.extend({</p>
-
-<pre><code>id: null,
-continuation: null,
-rows: null
 </code></pre>
 
-<p>});</p>
+<ul>
+<li><code>id</code> - the table name, this is unique within the storage account.</li>
+<li><code>continuationTokens</code> - a list of continuation tokens that are required for pagination. This will be covered in more detail later in the post.</li>
+</ul>
 
-<p>App.Page.reopenClass({
-  find: function(tableName, credentials, pageId, continuation) {</p>
 
-<pre><code>var partitionKey,
-  requestData = {
-  account: credentials.storageKey ? credentials.storageAccount : undefined,
-  key: credentials.storageKey,
-  top: 10
-};
-
-// ...
-</code></pre>
-
-<p>  }
+<pre><code class="javascript Page.js">App.Page = Ember.Object.extend({
+    id: null,
+    continuation: null,
+    rows: null
 });
-```
-* <code>id</code> - the page number.
-* <code>continuation</code> - if more results are available after the current page then this will contain the continuation token returned by Azure.
-* <code>rows</code> - a list of <code>App.Row</code> instances that make up the page results.
-* <code>find</code> - as with <code>App.Tables.find</code> this returns a promise that will eventually resolve to return an instance of an <code>App.Page</code> model.</p>
 
-<p>``` javascript Row.js
-App.Row = Ember.Object.extend({</p>
+App.Page.reopenClass({
+  find: function(tableName, credentials, pageId, continuation) {
 
-<pre><code>id: null,
-PartitionKey: null,
-RowKey: null,
-isSelected: false,
-partitionKeyChanged: false
+    var partitionKey,
+      requestData = {
+      account: credentials.storageKey ? credentials.storageAccount : undefined,
+      key: credentials.storageKey,
+      top: 10
+    };
+
+    // ...
+  }
+});
 </code></pre>
 
-<p>});
-```
-* <code>id</code> - a unique id for the row, this is a combination of the <code>PartitionKey</code> &amp; <code>RowKey</code>.
-* <code>PartitionKey</code> - the Azure table service partition key.
-* <code>RowKey</code> - the Azure table service row key.
-* <code>isSelected</code> - this probably shouldn't be a property on the model, it's used to toggle the selection status of rows within the table.
-* <code>partitionKeyChanged</code> - as above this property is used when rendering the table, when the partition key is different from the previous row a new partition key header is rendered.</p>
+<ul>
+<li><code>id</code> - the page number.</li>
+<li><code>continuation</code> - if more results are available after the current page then this will contain the continuation token returned by Azure.</li>
+<li><code>rows</code> - a list of <code>App.Row</code> instances that make up the page results.</li>
+<li><code>find</code> - as with <code>App.Tables.find</code> this returns a promise that will eventually resolve to return an instance of an <code>App.Page</code> model.</li>
+</ul>
+
+
+<pre><code class="javascript Row.js">App.Row = Ember.Object.extend({
+    id: null,
+    PartitionKey: null,
+    RowKey: null,
+    isSelected: false,
+    partitionKeyChanged: false
+});
+</code></pre>
+
+<ul>
+<li><code>id</code> - a unique id for the row, this is a combination of the <code>PartitionKey</code> &amp; <code>RowKey</code>.</li>
+<li><code>PartitionKey</code> - the Azure table service partition key.</li>
+<li><code>RowKey</code> - the Azure table service row key.</li>
+<li><code>isSelected</code> - this probably shouldn't be a property on the model, it's used to toggle the selection status of rows within the table.</li>
+<li><code>partitionKeyChanged</code> - as above this property is used when rendering the table, when the partition key is different from the previous row a new partition key header is rendered.</li>
+</ul>
+
 
 <h4>Authentication</h4>
 
@@ -523,74 +575,70 @@ partitionKeyChanged: false
 
 <p>Finally we can use the <code>events</code> hash to define an event handler for any errors that bubble up to the route. The Node API will throw a HTTP 401 Unauthorized error for any requests with invalid credentials, in this case we can also just redirect back to the login page. For any other errors we will just re-throw the error which will eventually be handled by the <code>Application</code> route.</p>
 
-<p>``` javascript AuthenticatedRoute.js
-App.AuthenticatedRoute = Ember.Route.extend({</p>
+<pre><code class="javascript AuthenticatedRoute.js">App.AuthenticatedRoute = Ember.Route.extend({
+    credentials: null,
 
-<pre><code>credentials: null,
+    _redirectToLogin: function(transition) {
+        var indexController = this.controllerFor("index");
 
-_redirectToLogin: function(transition) {
-    var indexController = this.controllerFor("index");
+        indexController.set("attemptedTransition", transition);
+        this.transitionTo("index");
+    },
 
-    indexController.set("attemptedTransition", transition);
-    this.transitionTo("index");
-},
+    beforeModel: function(transition) {
+        var credentials = this.controllerFor("index").get("credentials");
 
-beforeModel: function(transition) {
-    var credentials = this.controllerFor("index").get("credentials");
-
-    if (!credentials) {
-        this._redirectToLogin(transition);
-    } else {
-        this.set("credentials", credentials);
-    }
-},
-
-events: {
-    error: function(reason, transition) {
-        if (reason.status === 401) {
+        if (!credentials) {
             this._redirectToLogin(transition);
         } else {
-            throw {error: reason, transition: transition};
+            this.set("credentials", credentials);
+        }
+    },
+
+    events: {
+        error: function(reason, transition) {
+            if (reason.status === 401) {
+                this._redirectToLogin(transition);
+            } else {
+                throw {error: reason, transition: transition};
+            }
         }
     }
-}
+});
 </code></pre>
 
-<p>});
-```</p>
+<pre><code class="javascript ApplicationRoute.js">App.ApplicationRoute = Ember.Route.extend({
 
-<p>``` javascript ApplicationRoute.js
-App.ApplicationRoute = Ember.Route.extend({</p>
+  events: {
+    error: function(error) {
+      var errorController = this.router.container.lookup("controller:error");
 
-<p>  events: {</p>
+      errorController.set("model", error);
 
-<pre><code>error: function(error) {
-  var errorController = this.router.container.lookup("controller:error");
+      this.render("errorModal", {
+        into: "application",
+        outlet: "modalOutlet",
+        controller: errorController
+      });
+    },
 
-  errorController.set("model", error);
+    closeModal: function() {
+      this.render("emptyTemplate", {
+        into: "application",
+        outlet: "modalOutlet"
+      });
+    }
+  }
 
-  this.render("errorModal", {
-    into: "application",
-    outlet: "modalOutlet",
-    controller: errorController
-  });
-},
-
-closeModal: function() {
-  this.render("emptyTemplate", {
-    into: "application",
-    outlet: "modalOutlet"
-  });
-}
+});
 </code></pre>
 
-<p>  }</p>
+<ul>
+<li><code>events</code> - in <code>ApplicationRoute</code> the <code>events</code> hash lets us define application wide handlers for certain items. For example in <code>BootstrapModalView</code> we trigger a <code>closeModal</code> event, this will then bubble up through the corresponding <code>Controller</code>, <code>Route</code> and finally <code>ApplicationRoute</code> until it is handled.</li>
+<li><code>error</code> - used to provide an application wide hook for any unhandled errors, once an error is caught a modal dialog is displayed.</li>
+<li><code>closeModal</code> - closes the currently opened modal dialog, to do this we just render an empty template into the modal outlet.</li>
+</ul>
 
-<p>});
-```
-* <code>events</code> - in <code>ApplicationRoute</code> the <code>events</code> hash lets us define application wide handlers for certain items. For example in <code>BootstrapModalView</code> we trigger a <code>closeModal</code> event, this will then bubble up through the corresponding <code>Controller</code>, <code>Route</code> and finally <code>ApplicationRoute</code> until it is handled.
-* <code>error</code> - used to provide an application wide hook for any unhandled errors, once an error is caught a modal dialog is displayed.
-* <code>closeModal</code> - closes the currently opened modal dialog, to do this we just render an empty template into the modal outlet.</p>
 
 <h4>Modal Dialogs</h4>
 
@@ -598,86 +646,92 @@ closeModal: function() {
 
 <p>Typically what you'll end up doing is creating a <code>View</code> which wraps the library/plugin you are using. A <code>View</code> contains two import hooks which are <code>didInsertElement</code> and <code>willDestroyElement</code>. From Embers perspective a <code>View</code> is represented by a single DOM element and after this has been inserted into the DOM it will call <code>didInsertElement</code>. We can use this hook to create an instance of the Bootstrap Modal dialog plugin, render it within our container DOM element and hook up any events to corresponding handlers within the view.</p>
 
-<p>``` javascript BootstrapModalView.js
-App.BootstrapModalView = Ember.View.extend({
-  layoutName: "modal_layout",</p>
+<pre><code class="javascript BootstrapModalView.js">App.BootstrapModalView = Ember.View.extend({
+  layoutName: "modal_layout",
 
-<p>  backdrop: true,
+  backdrop: true,
   keyboard: true,
   backdropClass: "",
   positionSelector: null,
-  position: "bottom",</p>
+  position: "bottom",
 
-<p>  didInsertElement: function() {</p>
+  didInsertElement: function() {
+    var controller = this.get("controller"),
+      pos, tp, actualWidth, actualHeight;
 
-<pre><code>var controller = this.get("controller"),
-  pos, tp, actualWidth, actualHeight;
+    this.$(".modal").modal({
+      dynamic: true,
+      keyboard: this.get("keyboard"),
+      backdropClass: this.get("backdropClass")
+    });
 
-this.$(".modal").modal({
-  dynamic: true,
-  keyboard: this.get("keyboard"),
-  backdropClass: this.get("backdropClass")
-});
+    this.$(".modal").one("hidden", function() {
+      if (controller) {
+        controller.send("closeModal");
+      }
+    });
 
-this.$(".modal").one("hidden", function() {
-  if (controller) {
-    controller.send("closeModal");
+    // Dialog placement code
+    // ...
+  },
+
+  close: function() {
+    this.$(".modal").modal("hide");
+
+    this.get("controller").send("closeModal");
   }
 });
-
-// Dialog placement code
-// ...
 </code></pre>
 
-<p>  },</p>
+<ul>
+<li><code>layoutName</code> - a layout template can be specified, in our case <code>modal_layout</code> is simply a <code>DIV</code> with its css class set to <code>modal</code>. The <code>{{yield}}</code> keyword is a placeholder that indicates where the view will be rendered within the layout template.</li>
+<li><code>backdrop</code> - true/false, sets whether dialog should include a backdrop element.</li>
+<li><code>keyboard</code> - true/false, closes the modal when the escape key is pressed.</li>
+<li><code>backdropClass</code> - the css class of the backdrop element.</li>
+<li><code>positionSelector</code> - the dialog can be displayed relative to another element, this should be a selector expression.</li>
+<li><code>position</code> - if position relative to another element this should be one of top, right, bottom or left.</li>
+<li><code>didInsertElement</code> - creates an instance of the Bootstrap Modal dialog plugin.</li>
+<li><code>close</code> - the <code>errorModal.hbs</code> template triggers this action when it's close button is clicked. We in turn trigger a <code>closeModal</code> which will eventually be handled by the application route.</li>
+</ul>
 
-<p>  close: function() {</p>
-
-<pre><code>this.$(".modal").modal("hide");
-
-this.get("controller").send("closeModal");
-</code></pre>
-
-<p>  }
-});
-```
-* <code>layoutName</code> - a layout template can be specified, in our case <code>modal_layout</code> is simply a <code>DIV</code> with its css class set to <code>modal</code>. The <code>{{yield}}</code> keyword is a placeholder that indicates where the view will be rendered within the layout template.
-* <code>backdrop</code> - true/false, sets whether dialog should include a backdrop element.
-* <code>keyboard</code> - true/false, closes the modal when the escape key is pressed.
-* <code>backdropClass</code> - the css class of the backdrop element.
-* <code>positionSelector</code> - the dialog can be displayed relative to another element, this should be a selector expression.
-* <code>position</code> - if position relative to another element this should be one of top, right, bottom or left.
-* <code>didInsertElement</code> - creates an instance of the Bootstrap Modal dialog plugin.
-* <code>close</code> - the <code>errorModal.hbs</code> template triggers this action when it's close button is clicked. We in turn trigger a <code>closeModal</code> which will eventually be handled by the application route.</p>
 
 <p>This view can then be simply used as seen below in the <code>errorModal.hbs</code> template.
 
-``` html errorModal.hbs
-{{#view App.BootstrapModalView backdropClass="modal-backdrop-transparent"}}
-  <div class="modal-header"></p>
-
-<pre><code>  &lt;button type="button" class="close" {{action close target="view"}}&gt;&amp;times;&lt;/button&gt;
-
-  &lt;h3 id="modal_error_subject"&gt;Error&lt;/h3&gt;
-</code></pre>
-
-<p>  </div></p>
-
-<p>  <div class="modal-body"></p>
-
-<pre><code>&lt;p id="modal_error_text"&gt;Whoops, something has gone wrong!&lt;/p&gt;
-</code></pre>
-
-<p>  </div></p>
-
-<p>  <div class="modal-footer"></p>
-
-<pre><code>&lt;a class="btn" {{action close target="view"}}&gt;Close&lt;/a&gt;
-</code></pre>
-
-<p>  </div>
-{{/view}}
-```
+<figure class='code'><figcaption><span>errorModal.hbs</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'>{{#view App.BootstrapModalView backdropClass=&quot;modal-backdrop-transparent&quot;}}
+</span><span class='line'>  <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&quot;modal-header&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;button</span> <span class="na">type=</span><span class="s">&quot;button&quot;</span> <span class="na">class=</span><span class="s">&quot;close&quot;</span> <span class="err">{{</span><span class="na">action</span> <span class="na">close</span> <span class="na">target=</span><span class="s">&quot;view&quot;</span><span class="err">}}</span><span class="nt">&gt;</span><span class="ni">&amp;times;</span><span class="nt">&lt;/button&gt;&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;pre&gt;&lt;code&gt;</span>  <span class="ni">&amp;lt;</span>h3 id=&quot;modal_error_subject&quot;<span class="ni">&amp;gt;</span>Error<span class="ni">&amp;lt;</span>/h3<span class="ni">&amp;gt;</span>
+</span><span class='line'><span class="nt">&lt;/code&gt;&lt;/pre&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;p&gt;</span>  <span class="nt">&lt;/div&gt;&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;p&gt;</span>  <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&quot;modal-body&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;p</span> <span class="na">id=</span><span class="s">&quot;modal_error_text&quot;</span><span class="nt">&gt;</span>Whoops, something has gone wrong!<span class="nt">&lt;/p&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;/div&gt;&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;p&gt;</span>  <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&quot;modal-footer&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;a</span> <span class="na">class=</span><span class="s">&quot;btn&quot;</span> <span class="err">{{</span><span class="na">action</span> <span class="na">close</span> <span class="na">target=</span><span class="s">&quot;view&quot;</span><span class="err">}}</span><span class="nt">&gt;</span>Close<span class="nt">&lt;/a&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;/div&gt;</span>
+</span><span class='line'>{{/view}}
+</span></code></pre></td></tr></table></div></figure>
 </p>
 
 <h4>Table list</h4>
@@ -686,476 +740,664 @@ this.get("controller").send("closeModal");
 
 <p>This simply displays a list of the tables that are associated with the storage account.</p>
 
-<p>``` javascript TablesRoute.js
-App.TablesRoute = App.AuthenticatedRoute.extend({
-  model: function() {</p>
-
-<pre><code>return App.Tables.find(this.get("credentials"));
+<pre><code class="javascript TablesRoute.js ">App.TablesRoute = App.AuthenticatedRoute.extend({
+  model: function() {
+    return App.Tables.find(this.get("credentials"));
+  }
+}); 
 </code></pre>
 
-<p>  }
-});
-```
-* <code>model</code> - as we extend from <code>AuthenticatedRoute</code> we have the users storage account credentials available, we then make a call to the JSON API to retrieve a list of tables defined for the account. As we haven't defined a controller Ember will automatically create one, set the model &amp; bind it to the corresponding template.</p>
+<ul>
+<li><code>model</code> - as we extend from <code>AuthenticatedRoute</code> we have the users storage account credentials available, we then make a call to the JSON API to retrieve a list of tables defined for the account. As we haven't defined a controller Ember will automatically create one, set the model &amp; bind it to the corresponding template.</li>
+</ul>
+
 
 <p>
-``` html tables.hbs</p>
-
-<div class="row">
-  <div class="span9" id="results">
-    {{outlet}}
-  </div>
-
-  <div class="span3">
-    <h1 id="accountName">{{storageAccountName}}</h1>
-
-    <div id="tableList">
-      <ul class="nav nav-list">
-        <li class="nav-header">Tables</li>
-      {{#each table in tables}}
-        <li>
-          {{#linkTo table.page table App.Page.FIRSTPAGE}}
-            {{table.id}}
-          {{/linkTo}}
-        </li>
-      {{else}}
-        <li>No tables defined for this storage account.</li>
-      {{/each}}
-      </ul>     
-    </div>
-  
-    <div id="rowDetails">
-      {{outlet "selectedRowsOutlet"}}
-    </div>
-  </div>
-</div>
-
-
-<p>```
-* <code>outlet</code> - before a table is selected the <code>tables/index.hbs</code> template will be rendered into this outlet.
-* <code>storageAccountName</code> - the storage account name.
-* <code>{{#each table in tables}}</code> - renders a list of tables that are defined in the storage account, the <code>linkTo</code> helper creates links to the first page of records for the selected table.
-* <code>selectedRowsOutlet</code> - by default nothing is rendered into this template. It is populated once the user has navigated to a particular table and has selected records. The template <code>table/selectedRows.hbs</code> will then be rendered into this outlet.
-</p>
-
-<p>When first loaded Ember will render <code>tables/index.hbs</code> into the default <code>outlet</code> of the <code>tables.hbs</code> template. Once the user selects a table to view the table results will be rendered into the outlet instead.
-``` html tables/index.hbs</p>
-
-<h2>Get started.</h2>
-
-
-<p>Please select a table on the side to get started.</p>
-
-
-<p>```</p>
-
-<h4>Pagination</h4>
-
-<p>When a table is selected the application will navigate to the first page of results, if more results are available then the Azure storage API will include what is known as a continuation token. The continuation token is made up of a partition key and a row key and must be included in the subsequent request in order to obtain the next set of results.</p>
-
-<p>``` javascript TablePageRoute.js
-App.TablePageRoute = App.AuthenticatedRoute.extend({
-  renderTemplate: function() {</p>
-
-<pre><code>var selectedRowsController = this.controllerFor("selectedRows");
-this.render();
-
-this.render("table/selectedRows", {
-  into: "tables",
-  outlet: "selectedRowsOutlet",
-  controller: selectedRowsController
-});
-</code></pre>
-
-<p>  },</p>
-
-<p>  setupController: function(controller, model) {</p>
-
-<pre><code>var self = this,
-  pageId = model.id,
-  tableId = this.modelFor("table").get("id"),
-  credentials = this.get("credentials"),
-  continuation = this._getPageContinuationToken(pageId - 1);
-
-if (!model.rows) {
-  model = App.Page.find(tableId, credentials, pageId, continuation);
-
-  model.then(function(value) {
-    // success
-    self._setPageContinuationToken(value.id, value.continuation);
-    controller.set("model", value);
-  }, function(error) {
-    // failure
-    throw error;
-  });
-}
-</code></pre>
-
-<p>  },</p>
-
-<p>  model: function(params) {</p>
-
-<pre><code>var pageId = parseInt(params.page_id, 10) || 1;
-
-return App.Page.create({id: pageId});
-</code></pre>
-
-<p>  },</p>
-
-<p>  _getPageContinuationToken: function(pageId) {</p>
-
-<pre><code>var continuationToken = null,
-  table = this.modelFor("table"),
-  continuationTokens = table.get("continuationTokens");
-
-if (continuationTokens) {
-  continuationToken =  continuationTokens[pageId];
-}
-
-return continuationToken;
-</code></pre>
-
-<p>  },</p>
-
-<p>  _setPageContinuationToken: function(pageId, continuationToken) {</p>
-
-<pre><code>var table = this.modelFor("table"),
-  continuationTokens = table.get("continuationTokens");
-
-if (!continuationTokens) {
-  continuationTokens = {};
-  table.set("continuationTokens", continuationTokens);
-}
-
-continuationTokens[pageId] = continuationToken;
-</code></pre>
-
-<p>  }
-});
-```
+<figure class='code'><figcaption><span>tables.hbs</p></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+<span class='line-number'>59</span>
+<span class='line-number'>60</span>
+<span class='line-number'>61</span>
+<span class='line-number'>62</span>
+<span class='line-number'>63</span>
+<span class='line-number'>64</span>
+<span class='line-number'>65</span>
+<span class='line-number'>66</span>
+<span class='line-number'>67</span>
+<span class='line-number'>68</span>
+<span class='line-number'>69</span>
+<span class='line-number'>70</span>
+<span class='line-number'>71</span>
+<span class='line-number'>72</span>
+<span class='line-number'>73</span>
+<span class='line-number'>74</span>
+<span class='line-number'>75</span>
+<span class='line-number'>76</span>
+<span class='line-number'>77</span>
+<span class='line-number'>78</span>
+<span class='line-number'>79</span>
+<span class='line-number'>80</span>
+<span class='line-number'>81</span>
+<span class='line-number'>82</span>
+<span class='line-number'>83</span>
+<span class='line-number'>84</span>
+<span class='line-number'>85</span>
+<span class='line-number'>86</span>
+<span class='line-number'>87</span>
+<span class='line-number'>88</span>
+<span class='line-number'>89</span>
+<span class='line-number'>90</span>
+<span class='line-number'>91</span>
+<span class='line-number'>92</span>
+<span class='line-number'>93</span>
+<span class='line-number'>94</span>
+<span class='line-number'>95</span>
+<span class='line-number'>96</span>
+<span class='line-number'>97</span>
+<span class='line-number'>98</span>
+<span class='line-number'>99</span>
+<span class='line-number'>100</span>
+<span class='line-number'>101</span>
+<span class='line-number'>102</span>
+<span class='line-number'>103</span>
+<span class='line-number'>104</span>
+<span class='line-number'>105</span>
+<span class='line-number'>106</span>
+<span class='line-number'>107</span>
+<span class='line-number'>108</span>
+<span class='line-number'>109</span>
+<span class='line-number'>110</span>
+<span class='line-number'>111</span>
+<span class='line-number'>112</span>
+<span class='line-number'>113</span>
+<span class='line-number'>114</span>
+<span class='line-number'>115</span>
+<span class='line-number'>116</span>
+<span class='line-number'>117</span>
+<span class='line-number'>118</span>
+<span class='line-number'>119</span>
+<span class='line-number'>120</span>
+<span class='line-number'>121</span>
+<span class='line-number'>122</span>
+<span class='line-number'>123</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&quot;row&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&quot;span9&quot;</span> <span class="na">id=</span><span class="s">&quot;results&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>    {{outlet}}
+</span><span class='line'>  <span class="nt">&lt;/div&gt;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&quot;span3&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;h1</span> <span class="na">id=</span><span class="s">&quot;accountName&quot;</span><span class="nt">&gt;</span>{{storageAccountName}}<span class="nt">&lt;/h1&gt;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="nt">&lt;div</span> <span class="na">id=</span><span class="s">&quot;tableList&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;ul</span> <span class="na">class=</span><span class="s">&quot;nav nav-list&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;li</span> <span class="na">class=</span><span class="s">&quot;nav-header&quot;</span><span class="nt">&gt;</span>Tables<span class="nt">&lt;/li&gt;</span>
+</span><span class='line'>      {{#each table in tables}}
+</span><span class='line'>        <span class="nt">&lt;li&gt;</span>
+</span><span class='line'>          {{#linkTo table.page table App.Page.FIRSTPAGE}}
+</span><span class='line'>            {{table.id}}
+</span><span class='line'>          {{/linkTo}}
+</span><span class='line'>        <span class="nt">&lt;/li&gt;</span>
+</span><span class='line'>      {{else}}
+</span><span class='line'>        <span class="nt">&lt;li&gt;</span>No tables defined for this storage account.<span class="nt">&lt;/li&gt;</span>
+</span><span class='line'>      {{/each}}
+</span><span class='line'>      <span class="nt">&lt;/ul&gt;</span>
+</span><span class='line'>    <span class="nt">&lt;/div&gt;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="nt">&lt;div</span> <span class="na">id=</span><span class="s">&quot;rowDetails&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>      {{outlet &quot;selectedRowsOutlet&quot;}}
+</span><span class='line'>    <span class="nt">&lt;/div&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;/div&gt;</span>
+</span><span class='line'><span class="nt">&lt;/div&gt;</span>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;pre&gt;&lt;code&gt;</span>* <span class="ni">&amp;lt;</span>code<span class="ni">&amp;gt;</span>outlet<span class="ni">&amp;lt;</span>/code<span class="ni">&amp;gt;</span> - before a table is selected the <span class="ni">&amp;lt;</span>code<span class="ni">&amp;gt;</span>tables/index.hbs<span class="ni">&amp;lt;</span>/code<span class="ni">&amp;gt;</span> template will be rendered into this outlet.
+</span><span class='line'>* <span class="ni">&amp;lt;</span>code<span class="ni">&amp;gt;</span>storageAccountName<span class="ni">&amp;lt;</span>/code<span class="ni">&amp;gt;</span> - the storage account name.
+</span><span class='line'>* <span class="ni">&amp;lt;</span>code<span class="ni">&amp;gt;</span>{{#each table in tables}}<span class="ni">&amp;lt;</span>/code<span class="ni">&amp;gt;</span> - renders a list of tables that are defined in the storage account, the <span class="ni">&amp;lt;</span>code<span class="ni">&amp;gt;</span>linkTo<span class="ni">&amp;lt;</span>/code<span class="ni">&amp;gt;</span> helper creates links to the first page of records for the selected table.
+</span><span class='line'>* <span class="ni">&amp;lt;</span>code<span class="ni">&amp;gt;</span>selectedRowsOutlet<span class="ni">&amp;lt;</span>/code<span class="ni">&amp;gt;</span> - by default nothing is rendered into this template. It is populated once the user has navigated to a particular table and has selected records. The template <span class="ni">&amp;lt;</span>code<span class="ni">&amp;gt;</span>table/selectedRows.hbs<span class="ni">&amp;lt;</span>/code<span class="ni">&amp;gt;</span> will then be rendered into this outlet.
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>When first loaded Ember will render <span class="ni">&amp;lt;</span>code<span class="ni">&amp;gt;</span>tables/index.hbs<span class="ni">&amp;lt;</span>/code<span class="ni">&amp;gt;</span> into the default <span class="ni">&amp;lt;</span>code<span class="ni">&amp;gt;</span>outlet<span class="ni">&amp;lt;</span>/code<span class="ni">&amp;gt;</span> of the <span class="ni">&amp;lt;</span>code<span class="ni">&amp;gt;</span>tables.hbs<span class="ni">&amp;lt;</span>/code<span class="ni">&amp;gt;</span> template. Once the user selects a table to view the table results will be rendered into the outlet instead.
+</span><span class='line'><span class="nt">&lt;/code&gt;&lt;/pre&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;h2&gt;</span>Get started.<span class="nt">&lt;/h2&gt;</span>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;p&gt;</span>Please select a table on the side to get started.<span class="nt">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;pre&gt;&lt;code&gt;</span>
+</span><span class='line'>####Pagination
+</span><span class='line'>When a table is selected the application will navigate to the first page of results, if more results are available then the Azure storage API will include what is known as a continuation token. The continuation token is made up of a partition key and a row key and must be included in the subsequent request in order to obtain the next set of results.
+</span><span class='line'><span class="nt">&lt;/code&gt;&lt;/pre&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;p&gt;</span>App.TablePageRoute = App.AuthenticatedRoute.extend({
+</span><span class='line'>  renderTemplate: function() {
+</span><span class='line'>    var selectedRowsController = this.controllerFor(&quot;selectedRows&quot;);
+</span><span class='line'>    this.render();<span class="nt">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;pre&gt;&lt;code&gt;</span>this.render(&quot;table/selectedRows&quot;, {
+</span><span class='line'>  into: &quot;tables&quot;,
+</span><span class='line'>  outlet: &quot;selectedRowsOutlet&quot;,
+</span><span class='line'>  controller: selectedRowsController
+</span><span class='line'>});
+</span><span class='line'><span class="nt">&lt;/code&gt;&lt;/pre&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;p&gt;</span>  },<span class="nt">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;p&gt;</span>  setupController: function(controller, model) {
+</span><span class='line'>    var self = this,
+</span><span class='line'>      pageId = model.id,
+</span><span class='line'>      tableId = this.modelFor(&quot;table&quot;).get(&quot;id&quot;),
+</span><span class='line'>      credentials = this.get(&quot;credentials&quot;),
+</span><span class='line'>      continuation = this._getPageContinuationToken(pageId - 1);<span class="nt">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;pre&gt;&lt;code&gt;</span>if (!model.rows) {
+</span><span class='line'>  model = App.Page.find(tableId, credentials, pageId, continuation);
+</span><span class='line'>
+</span><span class='line'>  model.then(function(value) {
+</span><span class='line'>    // success
+</span><span class='line'>    self._setPageContinuationToken(value.id, value.continuation);
+</span><span class='line'>    controller.set(&quot;model&quot;, value);
+</span><span class='line'>  }, function(error) {
+</span><span class='line'>    // failure
+</span><span class='line'>    throw error;
+</span><span class='line'>  });
+</span><span class='line'>}
+</span><span class='line'><span class="nt">&lt;/code&gt;&lt;/pre&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;p&gt;</span>  },<span class="nt">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;p&gt;</span>  model: function(params) {
+</span><span class='line'>    var pageId = parseInt(params.page_id, 10) || 1;<span class="nt">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;pre&gt;&lt;code&gt;</span>return App.Page.create({id: pageId});
+</span><span class='line'><span class="nt">&lt;/code&gt;&lt;/pre&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;p&gt;</span>  },<span class="nt">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;p&gt;</span>  _getPageContinuationToken: function(pageId) {
+</span><span class='line'>    var continuationToken = null,
+</span><span class='line'>      table = this.modelFor(&quot;table&quot;),
+</span><span class='line'>      continuationTokens = table.get(&quot;continuationTokens&quot;);<span class="nt">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;pre&gt;&lt;code&gt;</span>if (continuationTokens) {
+</span><span class='line'>  continuationToken =  continuationTokens[pageId];
+</span><span class='line'>}
+</span><span class='line'>
+</span><span class='line'>return continuationToken;
+</span><span class='line'><span class="nt">&lt;/code&gt;&lt;/pre&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;p&gt;</span>  },<span class="nt">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;p&gt;</span>  _setPageContinuationToken: function(pageId, continuationToken) {
+</span><span class='line'>    var table = this.modelFor(&quot;table&quot;),
+</span><span class='line'>      continuationTokens = table.get(&quot;continuationTokens&quot;);<span class="nt">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;pre&gt;&lt;code&gt;</span>if (!continuationTokens) {
+</span><span class='line'>  continuationTokens = {};
+</span><span class='line'>  table.set(&quot;continuationTokens&quot;, continuationTokens);
+</span><span class='line'>}
+</span><span class='line'>
+</span><span class='line'>continuationTokens[pageId] = continuationToken;
+</span><span class='line'><span class="nt">&lt;/code&gt;&lt;/pre&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;p&gt;</span>  }
+</span><span class='line'>});
+</span></code></pre></td></tr></table></div></figure>
 * <code>renderTemplate</code> - this renders not only the default template but also the <code>table/selectedRows</code> template.
 * <code>setupController</code> - this hook is called after the <code>model</code> hook, here we check if the model is fully loaded, if not we get the current continuation token and request the detailed results for the current page.
 * <code>model</code> - returns an instance of <code>Page</code> with only the <code>id</code> property set, the model will be fully loaded in <code>setupController</code>.
 * <code><em>getPageContinuationToken</code> - gets the current <code>Table</code> and loads the continuation token for the current page of results.
 * <code></em>setPageContinuationToken</code> - stores a continuation token for a given page on the <code>Table</code> model instance.</p>
 
-<p>``` javascript TablePageController.js
-App.TablePageController = Ember.ObjectController.extend({
-  toggleRowSelection: function(row) {</p>
+<pre><code class="javascript TablePageController.js">App.TablePageController = Ember.ObjectController.extend({
+  toggleRowSelection: function(row) {
+    var isSelected = row.get("isSelected") || false;
 
-<pre><code>var isSelected = row.get("isSelected") || false;
+    row.set("isSelected", !isSelected);
+  },
 
-row.set("isSelected", !isSelected);
-</code></pre>
+  columns: function() {
+    var columns = [],
+      excludedColumns = {
+        id: true,
+        PartitionKey: true,
+        RowKey: true,
+        isSelected: true,
+        partitionKeyChanged: true,
+        _: true
+      };
 
-<p>  },</p>
+    _.each(this.get("rows"), function(element) {
+      for(var column in element) {
+        if (!element.hasOwnProperty(column)) {
+          break;
+        }
 
-<p>  columns: function() {</p>
+        if (!excludedColumns[column] &amp;&amp; _.contains(columns, column) !== true) {
+          columns.push(column);
+        }
+      }
+    });
 
-<pre><code>var columns = [],
-  excludedColumns = {
-    id: true,
-    PartitionKey: true,
-    RowKey: true,
-    isSelected: true,
-    partitionKeyChanged: true,
-    _: true
-  };
+    return columns;
 
-_.each(this.get("rows"), function(element) {
-  for(var column in element) {
-    if (!element.hasOwnProperty(column)) {
-      break;
-    }
+  }.property("rows.@each"),
 
-    if (!excludedColumns[column] &amp;&amp; _.contains(columns, column) !== true) {
-      columns.push(column);
-    }
-  }
+  columnHeaders: function() {
+    var columnHeaders = _.clone(this.get("columns"));
+
+    // blank header for "isSelected" column
+    columnHeaders.unshift(" ");
+
+    return columnHeaders;
+  }.property("columns"),
+
+  paginationLinks: function() {
+    var links = [],
+      currentPage = this.get("id"),
+      startPage = (currentPage &gt; 5) ? (currentPage - 5) : 1,
+      endPage = currentPage;
+
+    endPage += this.get("continuation") ? 2 : 1;
+
+    // Create a list of App.Page objects
+    // ...
+
+    return links;
+  }.property("id")
 });
-
-return columns;
 </code></pre>
 
-<p>  }.property("rows.@each"),</p>
+<ul>
+<li><code>toggleRowSelection</code> - toggles the <code>isSelected</code> property for a given row.</li>
+<li><code>columns</code> - returns a list of columns that will be displayed in the results table. A common set of properties are excluded from this list.</li>
+<li><code>columnHeaders</code> - returns a list of column headers that are displayed in the results table.</li>
+<li><code>paginationLinks</code> - a list <code>Page</code> instances that are used to render the pagination links.</li>
+</ul>
 
-<p>  columnHeaders: function() {</p>
-
-<pre><code>var columnHeaders = _.clone(this.get("columns"));
-
-// blank header for "isSelected" column
-columnHeaders.unshift(" ");
-
-return columnHeaders;
-</code></pre>
-
-<p>  }.property("columns"),</p>
-
-<p>  paginationLinks: function() {</p>
-
-<pre><code>var links = [],
-  currentPage = this.get("id"),
-  startPage = (currentPage &gt; 5) ? (currentPage - 5) : 1,
-  endPage = currentPage;
-
-endPage += this.get("continuation") ? 2 : 1;
-
-// Create a list of App.Page objects
-// ...
-
-return links;
-</code></pre>
-
-<p>  }.property("id")
-});
-```
-* <code>toggleRowSelection</code> - toggles the <code>isSelected</code> property for a given row.
-* <code>columns</code> - returns a list of columns that will be displayed in the results table. A common set of properties are excluded from this list.
-* <code>columnHeaders</code> - returns a list of column headers that are displayed in the results table.
-* <code>paginationLinks</code> - a list <code>Page</code> instances that are used to render the pagination links.</p>
 
 <p>
-``` html table/page.hbs</p>
-
-<table class="table table-condensed">
-  <thead>
-    {{#each column in columnHeaders}}
-      <th>
-        <p>{{column}}</p>
-      </th>
-    {{/each}}
-  </thead>
-  <tbody>
-  {{#each row in rows}}
-
-    {{#if row.partitionKeyChanged}}
-      <tr class="partition-key-row">
-        <td></td>
-        <td colspan="2">
-          <h3>{{row.PartitionKey}}</h3>
-        </td>
-        <td>
-          <p class="text-right">
-            <small>PARTITION KEY</small>
-          </p>
-        </td>
-      </tr>    
-    {{/if}}
-  
-    <tr 
-      {{action "toggleRowSelection" row on="click"}} 
-      {{bindAttr class=":master-row row.isSelected:master-row-selected"}}
-    >
-      <td>
-        {{view Ember.Checkbox checkedBinding="row.isSelected" bubbles=false}}
-      </td>
-      {{#each column in ../columns}}
-        <td>
-          <p>
-            {{tableCell ../row}}
-          </p>
-        </td>
-      {{/each}}
-    </tr>
-  {{/each}}
-
-  </tbody>
-</table>
-
-
-
-
-<div class="pagination">
-  <ul>
-    {{#each pageLink in paginationLinks}}
-    <li {{bindAttr class="pageLink.isActive:active pageLink.disabled"}}>
-        {{#unless pageLink.disabled}}
-          {{#linkTo table.page pageLink}}
-            {{safeString pageLink.displayText}}
-          {{/linkTo}}
-        {{/unless}}
-
-        {{#if pageLink.disabled}}
-          <span class="disabled">{{safeString pageLink.displayText}}</span>
-        {{/if}}
-    </li>
-    {{/each}}
-  </ul>
-</div>
-
-
-<p>```
-</p>
-
-<p>The template above uses a customised version of <code>Ember.CheckBox</code> and also a custom Handlebars helper <code>tableCell</code>.</p>
-
-<p>In the template the user is allowed to toggle row selection by either checking the "isSelected" checkbox or by just clicking on the row itself. The problem with the standard <code>Ember.CheckBox</code> is that there is no way to stop the click event from bubbling up and subsequently triggering the <code>toggleRowSelection</code> action. The customised version below has an extra "bubbles" property which when set to false will disable click event propagation.</p>
-
-<p>``` javascript EmberCheckbox.js
-Ember.Checkbox = Ember.View.extend({
-  classNames: ["ember-checkbox"],</p>
-
-<p>  tagName: "input",</p>
-
-<p>  attributeBindings: ["type", "checked", "indeterminate", "disabled", "tabindex", "name"],</p>
-
-<p>  type: "checkbox",
-  checked: false,
-  disabled: false,
-  indeterminate: false,
-  bubbles: true,</p>
-
-<p>  init: function() {</p>
-
-<pre><code>this._super();
-this.on("change", this, this._updateElementValue);
-</code></pre>
-
-<p>  },</p>
-
-<p>  didInsertElement: function() {</p>
-
-<pre><code>this._super();
-this.get("element").indeterminate = !!this.get("indeterminate");
-
-if (!this.get("bubbles")) {
-  this.$().click(function(e) {
-    e.stopPropagation();
-  });
-}
-</code></pre>
-
-<p>  },</p>
-
-<p>  _updateElementValue: function() {</p>
-
-<pre><code>Ember.set(this, "checked", this.$().prop("checked"));
-</code></pre>
-
-<p>  }
-});
-```</p>
+<figure class='code'><figcaption><span>table/page.hbs</p></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+<span class='line-number'>59</span>
+<span class='line-number'>60</span>
+<span class='line-number'>61</span>
+<span class='line-number'>62</span>
+<span class='line-number'>63</span>
+<span class='line-number'>64</span>
+<span class='line-number'>65</span>
+<span class='line-number'>66</span>
+<span class='line-number'>67</span>
+<span class='line-number'>68</span>
+<span class='line-number'>69</span>
+<span class='line-number'>70</span>
+<span class='line-number'>71</span>
+<span class='line-number'>72</span>
+<span class='line-number'>73</span>
+<span class='line-number'>74</span>
+<span class='line-number'>75</span>
+<span class='line-number'>76</span>
+<span class='line-number'>77</span>
+<span class='line-number'>78</span>
+<span class='line-number'>79</span>
+<span class='line-number'>80</span>
+<span class='line-number'>81</span>
+<span class='line-number'>82</span>
+<span class='line-number'>83</span>
+<span class='line-number'>84</span>
+<span class='line-number'>85</span>
+<span class='line-number'>86</span>
+<span class='line-number'>87</span>
+<span class='line-number'>88</span>
+<span class='line-number'>89</span>
+<span class='line-number'>90</span>
+<span class='line-number'>91</span>
+<span class='line-number'>92</span>
+<span class='line-number'>93</span>
+<span class='line-number'>94</span>
+<span class='line-number'>95</span>
+<span class='line-number'>96</span>
+<span class='line-number'>97</span>
+<span class='line-number'>98</span>
+<span class='line-number'>99</span>
+<span class='line-number'>100</span>
+<span class='line-number'>101</span>
+<span class='line-number'>102</span>
+<span class='line-number'>103</span>
+<span class='line-number'>104</span>
+<span class='line-number'>105</span>
+<span class='line-number'>106</span>
+<span class='line-number'>107</span>
+<span class='line-number'>108</span>
+<span class='line-number'>109</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="nt">&lt;table</span> <span class="na">class=</span><span class="s">&quot;table table-condensed&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;thead&gt;</span>
+</span><span class='line'>    {{#each column in columnHeaders}}
+</span><span class='line'>      <span class="nt">&lt;th&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;p&gt;</span>{{column}}<span class="nt">&lt;/p&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;/th&gt;</span>
+</span><span class='line'>    {{/each}}
+</span><span class='line'>  <span class="nt">&lt;/thead&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;tbody&gt;</span>
+</span><span class='line'>  {{#each row in rows}}
+</span><span class='line'>
+</span><span class='line'>    {{#if row.partitionKeyChanged}}
+</span><span class='line'>      <span class="nt">&lt;tr</span> <span class="na">class=</span><span class="s">&quot;partition-key-row&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;td&gt;&lt;/td&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;td</span> <span class="na">colspan=</span><span class="s">&quot;2&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>          <span class="nt">&lt;h3&gt;</span>{{row.PartitionKey}}<span class="nt">&lt;/h3&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;/td&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;td&gt;</span>
+</span><span class='line'>          <span class="nt">&lt;p</span> <span class="na">class=</span><span class="s">&quot;text-right&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>            <span class="nt">&lt;small&gt;</span>PARTITION KEY<span class="nt">&lt;/small&gt;</span>
+</span><span class='line'>          <span class="nt">&lt;/p&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;/td&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;/tr&gt;</span>
+</span><span class='line'>    {{/if}}
+</span><span class='line'>
+</span><span class='line'>    <span class="nt">&lt;tr</span>
+</span><span class='line'>      <span class="err">{{</span><span class="na">action</span> <span class="err">&quot;</span><span class="na">toggleRowSelection</span><span class="err">&quot;</span> <span class="na">row</span> <span class="na">on=</span><span class="s">&quot;click&quot;</span><span class="err">}}</span>
+</span><span class='line'>      <span class="err">{{</span><span class="na">bindAttr</span> <span class="na">class=</span><span class="s">&quot;:master-row row.isSelected:master-row-selected&quot;</span><span class="err">}}</span>
+</span><span class='line'>    <span class="nt">&gt;</span>
+</span><span class='line'>      <span class="nt">&lt;td&gt;</span>
+</span><span class='line'>        {{view Ember.Checkbox checkedBinding=&quot;row.isSelected&quot; bubbles=false}}
+</span><span class='line'>      <span class="nt">&lt;/td&gt;</span>
+</span><span class='line'>      {{#each column in ../columns}}
+</span><span class='line'>        <span class="nt">&lt;td&gt;</span>
+</span><span class='line'>          <span class="nt">&lt;p&gt;</span>
+</span><span class='line'>            {{tableCell ../row}}
+</span><span class='line'>          <span class="nt">&lt;/p&gt;</span>
+</span><span class='line'>        <span class="nt">&lt;/td&gt;</span>
+</span><span class='line'>      {{/each}}
+</span><span class='line'>    <span class="nt">&lt;/tr&gt;</span>
+</span><span class='line'>  {{/each}}
+</span><span class='line'>
+</span><span class='line'>  <span class="nt">&lt;/tbody&gt;</span>
+</span><span class='line'><span class="nt">&lt;/table&gt;</span>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">&quot;pagination&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>  <span class="nt">&lt;ul&gt;</span>
+</span><span class='line'>    {{#each pageLink in paginationLinks}}
+</span><span class='line'>    <span class="nt">&lt;li</span> <span class="err">{{</span><span class="na">bindAttr</span> <span class="na">class=</span><span class="s">&quot;pageLink.isActive:active pageLink.disabled&quot;</span><span class="err">}}</span><span class="nt">&gt;</span>
+</span><span class='line'>        {{#unless pageLink.disabled}}
+</span><span class='line'>          {{#linkTo table.page pageLink}}
+</span><span class='line'>            {{safeString pageLink.displayText}}
+</span><span class='line'>          {{/linkTo}}
+</span><span class='line'>        {{/unless}}
+</span><span class='line'>
+</span><span class='line'>        {{#if pageLink.disabled}}
+</span><span class='line'>          <span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">&quot;disabled&quot;</span><span class="nt">&gt;</span>{{safeString pageLink.displayText}}<span class="nt">&lt;/span&gt;</span>
+</span><span class='line'>        {{/if}}
+</span><span class='line'>    <span class="nt">&lt;/li&gt;</span>
+</span><span class='line'>    {{/each}}
+</span><span class='line'>  <span class="nt">&lt;/ul&gt;</span>
+</span><span class='line'><span class="nt">&lt;/div&gt;</span>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;pre&gt;&lt;code&gt;</span>
+</span><span class='line'>
+</span><span class='line'>The template above uses a customised version of <span class="ni">&amp;lt;</span>code<span class="ni">&amp;gt;</span>Ember.CheckBox<span class="ni">&amp;lt;</span>/code<span class="ni">&amp;gt;</span> and also a custom Handlebars helper <span class="ni">&amp;lt;</span>code<span class="ni">&amp;gt;</span>tableCell<span class="ni">&amp;lt;</span>/code<span class="ni">&amp;gt;</span>.
+</span><span class='line'>
+</span><span class='line'>In the template the user is allowed to toggle row selection by either checking the &quot;isSelected&quot; checkbox or by just clicking on the row itself. The problem with the standard <span class="ni">&amp;lt;</span>code<span class="ni">&amp;gt;</span>Ember.CheckBox<span class="ni">&amp;lt;</span>/code<span class="ni">&amp;gt;</span> is that there is no way to stop the click event from bubbling up and subsequently triggering the <span class="ni">&amp;lt;</span>code<span class="ni">&amp;gt;</span>toggleRowSelection<span class="ni">&amp;lt;</span>/code<span class="ni">&amp;gt;</span> action. The customised version below has an extra &quot;bubbles&quot; property which when set to false will disable click event propagation.
+</span><span class='line'><span class="nt">&lt;/code&gt;&lt;/pre&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;p&gt;</span>Ember.Checkbox = Ember.View.extend({
+</span><span class='line'>  classNames: [&quot;ember-checkbox&quot;],<span class="nt">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;p&gt;</span>  tagName: &quot;input&quot;,<span class="nt">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;p&gt;</span>  attributeBindings: [&quot;type&quot;, &quot;checked&quot;, &quot;indeterminate&quot;, &quot;disabled&quot;, &quot;tabindex&quot;, &quot;name&quot;],<span class="nt">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;p&gt;</span>  type: &quot;checkbox&quot;,
+</span><span class='line'>  checked: false,
+</span><span class='line'>  disabled: false,
+</span><span class='line'>  indeterminate: false,
+</span><span class='line'>  bubbles: true,<span class="nt">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;p&gt;</span>  init: function() {
+</span><span class='line'>    this.<span class="nt">&lt;em&gt;</span>super();
+</span><span class='line'>    this.on(&quot;change&quot;, this, this.<span class="nt">&lt;/em&gt;</span>updateElementValue);
+</span><span class='line'>  },<span class="nt">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;p&gt;</span>  didInsertElement: function() {
+</span><span class='line'>    this._super();
+</span><span class='line'>    this.get(&quot;element&quot;).indeterminate = !!this.get(&quot;indeterminate&quot;);<span class="nt">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;pre&gt;&lt;code&gt;</span>if (!this.get(&quot;bubbles&quot;)) {
+</span><span class='line'>  this.$().click(function(e) {
+</span><span class='line'>    e.stopPropagation();
+</span><span class='line'>  });
+</span><span class='line'>}
+</span><span class='line'><span class="nt">&lt;/code&gt;&lt;/pre&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;p&gt;</span>  },<span class="nt">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;p&gt;</span>  _updateElementValue: function() {
+</span><span class='line'>    Ember.set(this, &quot;checked&quot;, this.$().prop(&quot;checked&quot;));
+</span><span class='line'>  }
+</span><span class='line'>});
+</span></code></pre></td></tr></table></div></figure></p>
 
 <p>The other custom item used by the template is a Handlebars helper which is used to specific values for each of the display columns within the row. If the value is a valid date then it is formatted using the <a href="http://momentjs.com/">moment.js</a> library.
-``` javascript
-Ember.Handlebars.helper("tableCell", function(row, column) {
-  var value = "",</p>
-
-<pre><code>columnName = column.data.keywords.column;
-</code></pre>
-
-<p>  if (row[columnName]) {</p>
-
-<pre><code>value = row[columnName];
-</code></pre>
-
-<p>  }</p>
-
-<p>  if (moment(value).isValid()) {</p>
-
-<pre><code>value = moment(value).calendar();
-</code></pre>
-
-<p>  }</p>
-
-<p>  return value;
-});
-```</p>
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="nx">Ember</span><span class="p">.</span><span class="nx">Handlebars</span><span class="p">.</span><span class="nx">helper</span><span class="p">(</span><span class="s2">&quot;tableCell&quot;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">row</span><span class="p">,</span> <span class="nx">column</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>  <span class="kd">var</span> <span class="nx">value</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+</span><span class='line'>    <span class="nx">columnName</span> <span class="o">=</span> <span class="nx">column</span><span class="p">.</span><span class="nx">data</span><span class="p">.</span><span class="nx">keywords</span><span class="p">.</span><span class="nx">column</span><span class="p">;</span><span class="o">&lt;</span><span class="err">/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nx">p</span><span class="o">&gt;</span>  <span class="k">if</span> <span class="p">(</span><span class="nx">row</span><span class="p">[</span><span class="nx">columnName</span><span class="p">])</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nx">value</span> <span class="o">=</span> <span class="nx">row</span><span class="p">[</span><span class="nx">columnName</span><span class="p">];</span>
+</span><span class='line'>  <span class="p">}</span><span class="o">&lt;</span><span class="err">/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nx">p</span><span class="o">&gt;</span>  <span class="k">if</span> <span class="p">(</span><span class="nx">moment</span><span class="p">(</span><span class="nx">value</span><span class="p">).</span><span class="nx">isValid</span><span class="p">())</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nx">value</span> <span class="o">=</span> <span class="nx">moment</span><span class="p">(</span><span class="nx">value</span><span class="p">).</span><span class="nx">calendar</span><span class="p">();</span>
+</span><span class='line'>  <span class="p">}</span><span class="o">&lt;</span><span class="err">/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nx">p</span><span class="o">&gt;</span>  <span class="k">return</span> <span class="nx">value</span><span class="p">;</span>
+</span><span class='line'><span class="p">});</span>
+</span></code></pre></td></tr></table></div></figure></p>
 
 <p>The final items to look at are the controller and template for selected items. As shown above the <code>TablePageRoute</code> renders this into the <code>selectedRowsOutlet</code> of the <code>tables.hbs</code>.</p>
 
-<p>``` javascript SelectedRowsController.js
-App.SelectedRowsController = Ember.ObjectController.extend({
+<pre><code class="javascript SelectedRowsController.js">App.SelectedRowsController = Ember.ObjectController.extend({
   tablePage: null,
   needs: "tablePage",
   tablePageBinding: "controllers.tablePage",
-  currentIndex: 0,</p>
+  currentIndex: 0,
 
-<p>  selectedRows: function() {</p>
+  selectedRows: function() {
+    var rows = this.get("tablePage").get("rows"),
+      selectedRows = _.where(rows, {isSelected: true});
 
-<pre><code>var rows = this.get("tablePage").get("rows"),
-  selectedRows = _.where(rows, {isSelected: true});
+    if (selectedRows.length &lt;= this.get("currentIndex") &amp;&amp; selectedRows.length &gt; 0) {
+      this.set("currentIndex", selectedRows.length - 1);
+    }
 
-if (selectedRows.length &lt;= this.get("currentIndex") &amp;&amp; selectedRows.length &gt; 0) {
-  this.set("currentIndex", selectedRows.length - 1);
-}
+    return selectedRows;
+  }.property("tablePage.rows.@each.isSelected"),
 
-return selectedRows;
+  hasSelectedRows: function() {
+    return (this.get("selectedRows").length &gt; 0);
+  }.property("selectedRows"),
+
+  moveNext: function() {
+    var currentIndex = this.get("currentIndex");
+
+    if (currentIndex &lt; (this.get("selectedRows").length - 1)) {
+      this.set("currentIndex", currentIndex + 1);
+    }
+  },
+
+  movePrevious: function() {
+    var currentIndex = this.get("currentIndex");
+
+    if (currentIndex &gt; 0) {
+      this.set("currentIndex", currentIndex - 1);
+    }
+  },
+
+  moveNextEnabled: function() {
+    return (this.get("currentIndex") &lt; (this.get("selectedRows").length) - 1);
+  }.property("currentIndex", "selectedRows"),
+
+  movePreviousEnabled: function() {
+    return (this.get("currentIndex") &gt; 0);
+  }.property("currentIndex"),
+
+  currentRow: function() {
+    return this.get("selectedRows")[this.get("currentIndex")];
+  }.property("selectedRows", "currentIndex"),
+
+  currentDisplayIndex: function() {
+    return this.get("currentIndex") + 1;
+  }.property("currentIndex")
+
+});
 </code></pre>
 
-<p>  }.property("tablePage.rows.@each.isSelected"),</p>
+<ul>
+<li><code>tablePage</code> - we have a dependency on the table page controller, Ember will wire up a reference to this property.</li>
+<li><code>needs</code> - defines <code>tablePage</code> as a dependency.</li>
+<li><code>tablePageBinding</code> - sets the binding that will be used to wire <code>tablePage</code>.</li>
+<li><code>currentIndex</code> - the index of the record being displayed.</li>
+<li><code>selectedRows</code> - a list of all the rows that are currently selected on the table details page.</li>
+<li><code>hasSelectedRows</code> - true/false if there are any selected rows.</li>
+<li><code>moveNext</code> - displays the next selected record.</li>
+<li><code>movePrevious</code> - displays the previous selected record.</li>
+<li><code>moveNextEnabled</code> - true/false if there is another record to display.</li>
+<li><code>movePreviousEnabled</code> - true/false if there is a previous record to display.</li>
+<li><code>currentRow</code> - the current record.</li>
+<li><code>currentDisplayIndex</code> - the index of the current record as displayed to the user.</li>
+</ul>
 
-<p>  hasSelectedRows: function() {</p>
-
-<pre><code>return (this.get("selectedRows").length &gt; 0);
-</code></pre>
-
-<p>  }.property("selectedRows"),</p>
-
-<p>  moveNext: function() {</p>
-
-<pre><code>var currentIndex = this.get("currentIndex");
-
-if (currentIndex &lt; (this.get("selectedRows").length - 1)) {
-  this.set("currentIndex", currentIndex + 1);
-}
-</code></pre>
-
-<p>  },</p>
-
-<p>  movePrevious: function() {</p>
-
-<pre><code>var currentIndex = this.get("currentIndex");
-
-if (currentIndex &gt; 0) {
-  this.set("currentIndex", currentIndex - 1);
-}
-</code></pre>
-
-<p>  },</p>
-
-<p>  moveNextEnabled: function() {</p>
-
-<pre><code>return (this.get("currentIndex") &lt; (this.get("selectedRows").length) - 1);
-</code></pre>
-
-<p>  }.property("currentIndex", "selectedRows"),</p>
-
-<p>  movePreviousEnabled: function() {</p>
-
-<pre><code>return (this.get("currentIndex") &gt; 0);
-</code></pre>
-
-<p>  }.property("currentIndex"),</p>
-
-<p>  currentRow: function() {</p>
-
-<pre><code>return this.get("selectedRows")[this.get("currentIndex")];
-</code></pre>
-
-<p>  }.property("selectedRows", "currentIndex"),</p>
-
-<p>  currentDisplayIndex: function() {</p>
-
-<pre><code>return this.get("currentIndex") + 1;
-</code></pre>
-
-<p>  }.property("currentIndex")</p>
-
-<p>});
-```
-* <code>tablePage</code> - we have a dependency on the table page controller, Ember will wire up a reference to this property.
-* <code>needs</code> - defines <code>tablePage</code> as a dependency.
-* <code>tablePageBinding</code> - sets the binding that will be used to wire <code>tablePage</code>.
-* <code>currentIndex</code> - the index of the record being displayed.
-* <code>selectedRows</code> - a list of all the rows that are currently selected on the table details page.
-* <code>hasSelectedRows</code> - true/false if there are any selected rows.
-* <code>moveNext</code> - displays the next selected record.
-* <code>movePrevious</code> - displays the previous selected record.
-* <code>moveNextEnabled</code> - true/false if there is another record to display.
-* <code>movePreviousEnabled</code> - true/false if there is a previous record to display.
-* <code>currentRow</code> - the current record.
-* <code>currentDisplayIndex</code> - the index of the current record as displayed to the user.</p>
 
 <p>
 ``` html table/selectedRows.hbs</p>

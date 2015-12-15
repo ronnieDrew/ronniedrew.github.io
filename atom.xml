@@ -4,11 +4,11 @@
   <title><![CDATA[Brewing Code]]></title>
   <link href="http://www.brewingcode.com/atom.xml" rel="self"/>
   <link href="http://www.brewingcode.com/"/>
-  <updated>2013-12-13T15:05:21+00:00</updated>
+  <updated>2015-12-15T10:49:22+00:00</updated>
   <id>http://www.brewingcode.com/</id>
   <author>
     <name><![CDATA[Ronan Gibney]]></name>
-    
+    <email><![CDATA[ronnieDrew@gmail.com]]></email>
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
@@ -18,7 +18,7 @@
     <link href="http://www.brewingcode.com/blog/2013/12/13/index-deployment-in-ravendb/"/>
     <updated>2013-12-13T08:15:00+00:00</updated>
     <id>http://www.brewingcode.com/blog/2013/12/13/index-deployment-in-ravendb</id>
-    <content type="html"><![CDATA[<p>As I&#8217;ve said before I&#8217;m a big fan of <a href="http://ravendb.net">RavenDb</a>. I remember playing around with Raven for the first time back in 2010 and sitting there with a big smile on my face, it was obvious that a huge amount of work had been put into the developer experience.</p>
+    <content type="html"><![CDATA[<p>As I've said before I'm a big fan of <a href="http://ravendb.net">RavenDb</a>. I remember playing around with Raven for the first time back in 2010 and sitting there with a big smile on my face, it was obvious that a huge amount of work had been put into the developer experience.</p>
 
 <p>Compared to the relational databases I was working with at the time everything just seemed so friction free. That said while Raven is schema free you still can need to include specific steps for it in your deployment process as you would for a relational database. Namely this might include your index definitions or perhaps some kind of document migration.</p>
 
@@ -27,7 +27,7 @@
 
 <p>In Raven while the key/value store is ACID index queries are BASE. Raven uses Lucene for indexes which are pre-computed by background processes as documents arrive which means that query results can be stale until the indexing process catches up with the latest document write activity.</p>
 
-<p>Raven has a lot of smarts built into its query system, you can just perform ad-hoc queries and let Raven determine the appropriate index to use. If an appropriate index doesn&#8217;t exist then Raven will just go ahead and create one on the fly.</p>
+<p>Raven has a lot of smarts built into its query system, you can just perform ad-hoc queries and let Raven determine the appropriate index to use. If an appropriate index doesn't exist then Raven will just go ahead and create one on the fly.</p>
 
 <p>That said when you have a large production database you might not want Raven to trigger a huge index rebuild when it receives a new query from your freshly deployed application. Along with ad-hoc indexes Raven also offers the ability to create static indexes.</p>
 
@@ -84,7 +84,7 @@
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>This is where I feel there is room for improvement, I&#8217;d rather not have index creation / re-builds which are potentially a slow expensive process tied to the start-up on my application. What I&#8217;d prefer is to separate it out into specific step in the deployment process which would be something along the lines of..</p>
+<p>This is where I feel there is room for improvement, I'd rather not have index creation / re-builds which are potentially a slow expensive process tied to the start-up on my application. What I'd prefer is to separate it out into specific step in the deployment process which would be something along the lines of..</p>
 
 <ul>
 <li>Create new indexes across all Raven instances in production. Where an existing index has changed the original index should be left in place. In effect we will have two versions of the index, one that is currently in use by the application and another that will be used by the new version of the application when it is deployed.</li>
@@ -93,9 +93,9 @@
 </ul>
 
 
-<p>A quick search for existing tooling to enable this process lead me to <a href="https://markedup.com/">markedup.com&#8217;s</a> <a href="http://blog.markedup.com/2012/09/introducing-hircine-a-stand-alone-index-builder-for-ravendb/">Hircine</a> tool which is a stand alone index builder for RavenDb. This does almost everything I need however it seems that they have <a href="http://blog.markedup.com/2013/02/cassandra-hive-and-hadoop-how-we-picked-our-analytics-stack/">moved on</a> from Raven so it hasn&#8217;t been updated in quite some time. I thought this morning I&#8217;d do a <a href="https://github.com/ronnieDrew/Hircine">quick spike</a> to add the functionality I&#8217;m looking for to Hircine. The following is a quick run through the changes I made.</p>
+<p>A quick search for existing tooling to enable this process lead me to <a href="https://markedup.com/">markedup.com's</a> <a href="http://blog.markedup.com/2012/09/introducing-hircine-a-stand-alone-index-builder-for-ravendb/">Hircine</a> tool which is a stand alone index builder for RavenDb. This does almost everything I need however it seems that they have <a href="http://blog.markedup.com/2013/02/cassandra-hive-and-hadoop-how-we-picked-our-analytics-stack/">moved on</a> from Raven so it hasn't been updated in quite some time. I thought this morning I'd do a <a href="https://github.com/ronnieDrew/Hircine">quick spike</a> to add the functionality I'm looking for to Hircine. The following is a quick run through the changes I made.</p>
 
-<p>The standard index &amp; multi-map index creation tasks now have corresponding &#8220;Versioned&#8221; tasks. These versioned indexes can then be setup in the exact same way as standard static instances but instead you inherit from a different base class, other than that everything works the same from the developers point of view.</p>
+<p>The standard index &amp; multi-map index creation tasks now have corresponding "Versioned" tasks. These versioned indexes can then be setup in the exact same way as standard static instances but instead you inherit from a different base class, other than that everything works the same from the developers point of view.</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -133,7 +133,7 @@
 
 <p>To achieve this what I did was override the <code>IndexName</code> property in my <code>AbstractVersionedIndexCreationTask</code> &amp; <code>AbstractMultiMapVersionedIndexCreationTask</code> classes. The index name now has the index definition hashcode appended to it so when a definition is changed we should get a new index name. This has the benefit that the Raven client can request the correct index version without having to do any further work.</p>
 
-<p>The interface <code>IVersionedIndex</code> is just added to have an easy way to identify versioned indexes in an assembly and obtain the non-versioned index name. There are four different &#8220;versioned&#8221; creation tasks, each of these implement <code>IVersionedIndex</code>.</p>
+<p>The interface <code>IVersionedIndex</code> is just added to have an easy way to identify versioned indexes in an assembly and obtain the non-versioned index name. There are four different "versioned" creation tasks, each of these implement <code>IVersionedIndex</code>.</p>
 
 <ul>
 <li><code>AbstractVersionedIndexCreationTask&#60;TDocument&#62;</code></li>
@@ -204,7 +204,7 @@
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>The only change I need to make to Hircine is then to support the deletion of inactive versioned indexes which is fairly straight forward. In the <code>Hicine.Core</code> the <code>IndexBuilder.RunAsync</code> method compiles a list of tasks to create the various required indexes, I&#8217;ve implemented a <code>DropIndexAsync</code> task and when the build instructions <code>DropInactiveVersionedIndexes</code> flag is set to true a set of tasks will be added to delete any inactive indexes.</p>
+<p>The only change I need to make to Hircine is then to support the deletion of inactive versioned indexes which is fairly straight forward. In the <code>Hicine.Core</code> the <code>IndexBuilder.RunAsync</code> method compiles a list of tasks to create the various required indexes, I've implemented a <code>DropIndexAsync</code> task and when the build instructions <code>DropInactiveVersionedIndexes</code> flag is set to true a set of tasks will be added to delete any inactive indexes.</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -295,7 +295,7 @@
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>All in all I&#8217;m not sure how I feel about this spike. Including the index definition hash in the index name smells wrong. Firstly you have a bunch of gibberish appended to the index name and it wouldn&#8217;t be obvious in the management studio which index is actually the active one. Secondly hash codes are not guaranteed to be unique so I guess there&#8217;s the chance that an index definition could be changed but have the same hash as the existing version, in this case the index would get updated with the latest definition.</p>
+<p>All in all I'm not sure how I feel about this spike. Including the index definition hash in the index name smells wrong. Firstly you have a bunch of gibberish appended to the index name and it wouldn't be obvious in the management studio which index is actually the active one. Secondly hash codes are not guaranteed to be unique so I guess there's the chance that an index definition could be changed but have the same hash as the existing version, in this case the index would get updated with the latest definition.</p>
 
 <p>That said where you have indexes that operate over large numbers of documents and take significant time to rebuild it would be nice to have something similar to this.</p>
 
@@ -306,18 +306,18 @@
   <entry>
     <title type="html"><![CDATA[Windows Azure Table Explorer]]></title>
     <link href="http://www.brewingcode.com/blog/2013/08/10/windows-azure-table-explorer/"/>
-    <updated>2013-08-10T09:04:00+01:00</updated>
+    <updated>2013-08-10T09:04:00+00:00</updated>
     <id>http://www.brewingcode.com/blog/2013/08/10/windows-azure-table-explorer</id>
-    <content type="html"><![CDATA[<p>This morning I was reading back over the archives of Jeff Wilcox&#8217;s blog and came across <a href="http://www.jeff.wilcox.name/2013/04/windows-azure-table-explorer/">this post</a> detailing a Single Page App that he built for browsing table service data on an Azure storage account.</p>
+    <content type="html"><![CDATA[<p>This morning I was reading back over the archives of Jeff Wilcox's blog and came across <a href="http://www.jeff.wilcox.name/2013/04/windows-azure-table-explorer/">this post</a> detailing a Single Page App that he built for browsing table service data on an Azure storage account.</p>
 
-<p>As I&#8217;ve been learning <a href="http://emberjs.com/">Ember</a> I thought it would be fun to take the jQuery front end and replace it with Ember.</p>
+<p>As I've been learning <a href="http://emberjs.com/">Ember</a> I thought it would be fun to take the jQuery front end and replace it with Ember.</p>
 
 <!--more-->
 
 
 <h3>Overview</h3>
 
-<p>So first thing I&#8217;ll just do a quick run through Jeff&#8217;s application as it stands (you can find the GitHub repo <a href="https://github.com/jeffwilcox/azure-table-explorer">here</a>).</p>
+<p>So first thing I'll just do a quick run through Jeff's application as it stands (you can find the GitHub repo <a href="https://github.com/jeffwilcox/azure-table-explorer">here</a>).</p>
 
 <p>The application is up and running on Azure websites here <a href="https://waztable.azurewebsites.net/">https://waztable.azurewebsites.net/</a> and allows you to browse the Table Service data for a particular Storage Account.</p>
 
@@ -422,7 +422,7 @@
 
 <p><img src="http://www.brewingcode.com/images/posts/2013-08-06-windows-azure-table-explorer/credentials-page.png" alt="Credentials page" /></p>
 
-<p>If you&#8217;ve provided valid credentials then you&#8217;ll see a listing of all the tables defined in the specified storage account.</p>
+<p>If you've provided valid credentials then you'll see a listing of all the tables defined in the specified storage account.</p>
 
 <p><img src="http://www.brewingcode.com/images/posts/2013-08-06-windows-azure-table-explorer/storage-account-tables.png" alt="Storage Account table listing" /></p>
 
@@ -434,25 +434,25 @@
 
 <h2>Ember Tooling</h2>
 
-<p>Before we get into converting this into Ember we need to talk a little about tooling. If you&#8217;re building an application with Ember then you&#8217;re going to need to have some kind of tooling/build process in place. At the moment I like to use <a href="http://yeoman.io">Yeoman</a> for this.</p>
+<p>Before we get into converting this into Ember we need to talk a little about tooling. If you're building an application with Ember then you're going to need to have some kind of tooling/build process in place. At the moment I like to use <a href="http://yeoman.io">Yeoman</a> for this.</p>
 
-<p>For those of you have haven&#8217;t heard of it before Yeoman is a collection of <a href="http://gruntjs.com/">Grunt</a> build scripts, <a href="https://github.com/yeoman/yo">scaffolding tools</a>, Twitters <a href="http://bower.io/">Bower</a> package manager and a bunch of opinion.</p>
+<p>For those of you have haven't heard of it before Yeoman is a collection of <a href="http://gruntjs.com/">Grunt</a> build scripts, <a href="https://github.com/yeoman/yo">scaffolding tools</a>, Twitters <a href="http://bower.io/">Bower</a> package manager and a bunch of opinion.</p>
 
-<p>On Windows assuming you have <a href="http://chocolatey.org/">Chocolatey</a> installed (and if not why not?) then getting Yeoman installed is as simple as&#8230;</p>
+<p>On Windows assuming you have <a href="http://chocolatey.org/">Chocolatey</a> installed (and if not why not?) then getting Yeoman installed is as simple as...</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 </pre></td><td class='code'><pre><code class='powershell'><span class='line'><span class="n">cinst</span> <span class="n">Yeoman</span>
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>With Yeoman installed next we&#8217;ll want to add the scaffolding support for the Ember tools.</p>
+<p>With Yeoman installed next we'll want to add the scaffolding support for the Ember tools.</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 </pre></td><td class='code'><pre><code class='powershell'><span class='line'><span class="n">npm</span> <span class="n">install</span> <span class="n">-g</span> <span class="n">generator-ember</span>
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>With that we&#8217;ll create a directory for our app and use the Yeoman scaffolding tools for Ember to create a basic structure.</p>
+<p>With that we'll create a directory for our app and use the Yeoman scaffolding tools for Ember to create a basic structure.</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -471,10 +471,10 @@
 
 <ul>
 <li><code>bower.json</code> - a list of packages from Bower that we are using in our app.</li>
-<li><code>Grunt.js</code> - the Grunt file contains the build scripts for our application, specifically we&#8217;ll be using the following commands.
+<li><code>Grunt.js</code> - the Grunt file contains the build scripts for our application, specifically we'll be using the following commands.
 
 <ul>
-<li><code>grunt server</code> - runs your application in preview mode at <code>http://localhost:4000</code>. The file system is monitored for changes and the application is re-built as required.</li>
+<li><code>grunt server</code> - runs your application in preview mode at <code><a href="http://localhost:4000">http://localhost:4000</a></code>. The file system is monitored for changes and the application is re-built as required.</li>
 <li><code>grunt test</code> - runs your application unit tests inside <a href="http://phantomjs.org">PhantomJS</a></li>
 <li><code>grunt</code> - builds the application in release mode and ready for deployment, the output of this task is created in the <code>dist</code> directory.</li>
 </ul>
@@ -486,7 +486,7 @@
 </ul>
 
 
-<p>Before we use <code>npm install</code> to get all the required node modules for our application we need to make a small alternation to the <code>packages.json</code> that was just created the <code>emberapp</code> directory. There is problem with the <code>grunt-contrib-imagemin</code> module on Windows. It depends on <code>jpegtran-bin</code> and the latest version of this can&#8217;t be built from source on Windows and thus installed via npm. Instead we can specify the previous version in the <code>package.json</code>, this should be above <code>grunt-contrib-imagemin</code>.</p>
+<p>Before we use <code>npm install</code> to get all the required node modules for our application we need to make a small alternation to the <code>packages.json</code> that was just created the <code>emberapp</code> directory. There is problem with the <code>grunt-contrib-imagemin</code> module on Windows. It depends on <code>jpegtran-bin</code> and the latest version of this can't be built from source on Windows and thus installed via npm. Instead we can specify the previous version in the <code>package.json</code>, this should be above <code>grunt-contrib-imagemin</code>.</p>
 
 <figure class='code'><figcaption><span>packages.json</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -501,29 +501,29 @@
 
 <p>With this alteration in place you can go ahead and run <code>npm install</code> to get all the required dependencies.</p>
 
-<p>So at this point we will have the basic structure of our Ember app scaffolded out and everything is ready to be built and run. We can boot the app with the <code>grunt server</code> command, this will run the app on <code>http://localhost:4000</code>.</p>
+<p>So at this point we will have the basic structure of our Ember app scaffolded out and everything is ready to be built and run. We can boot the app with the <code>grunt server</code> command, this will run the app on <code><a href="http://localhost:4000">http://localhost:4000</a></code>.</p>
 
 <h3>Ember Concepts</h3>
 
-<p>Now we are ready to start building out the app however before that I&#8217;ll just do a super quick run down through the main components in Ember.</p>
+<p>Now we are ready to start building out the app however before that I'll just do a super quick run down through the main components in Ember.</p>
 
 <ul>
 <li><code>Router</code> - Used to define routes for your application. In Ember URLs contain the state required for the Router to create a corresponding set of Controllers, Routes &amp; Templates that are needed to restore the app to the point defined by the URL.</li>
 <li><code>Routes</code> - a Route is responsible for loading a model and rendering a template into an outlet.</li>
 <li><code>Model</code> - a Model holds data that is persisted on the server, in our case Models will be created from the JSON returned by the API defined at the top of the post.</li>
-<li><code>Controller</code> - a Controller proxies it&#8217;s related model and can be used to add any UI specific properties or functionality required. Coming from a XAML background I like to think of Ember Controllers as what we would call a ViewModel in XAML world.</li>
+<li><code>Controller</code> - a Controller proxies it's related model and can be used to add any UI specific properties or functionality required. Coming from a XAML background I like to think of Ember Controllers as what we would call a ViewModel in XAML world.</li>
 <li><code>Template</code> - Ember uses the <a href="http://handlebarsjs.com/">Handlebars</a> templating language. A Template is bound to a Controller and is responsible for rendering UI for a specific portion of the page which is known as an Outlet. Templates can also contain Outlets so you can easily build your UI with multiple templates nested within each other.</li>
 <li><code>View</code> - in Ember Views are used when you need more control over exactly how the DOM is manipulated, typically they are quite useful when integrating with other libraries such as jQuery plugins.</li>
 </ul>
 
 
-<p>Finally we&#8217;ll have a quick look at the <code>.\app</code> directory which contains the source for our Ember application.</p>
+<p>Finally we'll have a quick look at the <code>.\app</code> directory which contains the source for our Ember application.</p>
 
 <p><img src="http://www.brewingcode.com/images/posts/2013-08-06-windows-azure-table-explorer/ember-app-structure.png" alt="Ember application directory structure" /></p>
 
 <ul>
 <li><code>.\bower_components</code> - packages referenced in bower.json are stored in this directory.</li>
-<li><code>.\img</code> - We&#8217;re using Bootstrap so this directory contains some glyphicon image files.</li>
+<li><code>.\img</code> - We're using Bootstrap so this directory contains some glyphicon image files.</li>
 <li><code>.\scripts</code> - the JavaScript source. In the root we have a file app.js which is the application entry point, after that we have separate sub-directories for our various Ember components e.g. controllers, models, routes &amp; views.</li>
 <li><code>.\styles</code> - contains the SASS source used to produce our CSS.</li>
 <li><code>.\templates</code> - Handlebars templates</li>
@@ -531,7 +531,7 @@
 </ul>
 
 
-<p>An excerpt of the index.html file is listed below, the important parts are the <code>build:js</code> snippets. Yeoman uses these markers to insert Bower libraries, Handlebars templates and the application source itself. Depending on the grunt task executed what&#8217;s injected into these placeholders will be different, for example when running <code>grunt</code> the application is built in release mode and so files are concatenated, minified &amp; uglified.</p>
+<p>An excerpt of the index.html file is listed below, the important parts are the <code>build:js</code> snippets. Yeoman uses these markers to insert Bower libraries, Handlebars templates and the application source itself. Depending on the grunt task executed what's injected into these placeholders will be different, for example when running <code>grunt</code> the application is built in release mode and so files are concatenated, minified &amp; uglified.</p>
 
 <figure class='code'><figcaption><span>index.html</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -590,7 +590,7 @@
 
 <h2>Replacing jQuery with Ember</h2>
 
-<p>The first thing you want to do when starting an Ember app is to get your routes defined. Below are the route definitions for the app, I&#8217;ve also included comments for routes that Ember will create by itself. Ember is a very convention based framework and in particular route names are important as these are used in the controller, model, route &amp; template naming conventions.</p>
+<p>The first thing you want to do when starting an Ember app is to get your routes defined. Below are the route definitions for the app, I've also included comments for routes that Ember will create by itself. Ember is a very convention based framework and in particular route names are important as these are used in the controller, model, route &amp; template naming conventions.</p>
 
 <figure class='code'><figcaption><span>Application Routes</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -627,7 +627,7 @@
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>With these routes defined we can start fleshing out the templates and layout of our application. The <code>application.hbs</code> template will be rendered by Ember when your application starts so it&#8217;s the place to define your page layout structure. The header and footer sections have been created as separate template fragments <code><em>header.hbs</code> and <code></em>footer.hbs</code> and are included using the <code>{{partial "{template-name}"}}</code> helper. Note that partial templates must always be named with an underscore prefix however this prefix is excluded when using the partial helper. e.g. A partial template <code>_header.hbs</code> is included in a template using <code>{{partial "header"}}</code>. Also the binding context of the partial is not changed, the fragment is just treated as if it were inline with the main template.</p>
+<p>With these routes defined we can start fleshing out the templates and layout of our application. The <code>application.hbs</code> template will be rendered by Ember when your application starts so it's the place to define your page layout structure. The header and footer sections have been created as separate template fragments <code><em>header.hbs</code> and <code></em>footer.hbs</code> and are included using the <code>{{partial "{template-name}"}}</code> helper. Note that partial templates must always be named with an underscore prefix however this prefix is excluded when using the partial helper. e.g. A partial template <code>_header.hbs</code> is included in a template using <code>{{partial "header"}}</code>. Also the binding context of the partial is not changed, the fragment is just treated as if it were inline with the main template.</p>
 
 <p>Along with partials we also have two outlets defined in this template. Outlets are just placeholders that other templates can be rendered into. Templates can have a single default outlet which is not given a name, if a template has multiple outlets then the non-default items must be allocated unique names. In this case we have a separate outlet for modal dialogs which will be covered later in the post.</p>
 
@@ -758,11 +758,11 @@
 <ul>
 <li><code>storageAccount</code> - bound to the corresponding input element in the template.</li>
 <li><code>storageKey</code> - as above.</li>
-<li><code>attemptedTransition</code> - route transitions can be cancelled if the application doesn&#8217;t have valid credentials. If this is the case the application will redirect back to the index route and store the originally attempted route transition here. If the credentials/login is successful we can then retry the original transition and return the app to the requested URL.</li>
+<li><code>attemptedTransition</code> - route transitions can be cancelled if the application doesn't have valid credentials. If this is the case the application will redirect back to the index route and store the originally attempted route transition here. If the credentials/login is successful we can then retry the original transition and return the app to the requested URL.</li>
 <li><code>credentials</code> - If the supplied <code>storageAccount</code> and <code>storageKey</code> are valid then these credentials will be stored here and used for subsequent API requests throughout the app.</li>
 <li><code>usingSSL</code> - true/false depending on whether the page is using SSL. This is used to toggle the warning message within the template that is displayed if the page is not using SSL.</li>
-<li><code>loginDisabled</code> - toggles whether the &#8220;Explore&#8221; button is enabled/disabled. This is a computed field and is dependent on the <code>storageAccount</code> &amp; <code>storageKey</code> fields, if either field is empty then the button is disabled.</li>
-<li><code>login</code> - handles the click action of the &#8220;Explore&#8221; button. This action will use the method <code>App.Tables.find</code> passing the credentials entered by the user, this returns a promise &amp; when it resolves successfully we will store the credentials and redirect to the appropriate route. If the promise resolves with an error then credentials are cleared and we send an error message. This will eventually bubble up to the <code>ApplicationRoute</code> which will in turn trigger a modal dialog to display an error message.</li>
+<li><code>loginDisabled</code> - toggles whether the "Explore" button is enabled/disabled. This is a computed field and is dependent on the <code>storageAccount</code> &amp; <code>storageKey</code> fields, if either field is empty then the button is disabled.</li>
+<li><code>login</code> - handles the click action of the "Explore" button. This action will use the method <code>App.Tables.find</code> passing the credentials entered by the user, this returns a promise &amp; when it resolves successfully we will store the credentials and redirect to the appropriate route. If the promise resolves with an error then credentials are cleared and we send an error message. This will eventually bubble up to the <code>ApplicationRoute</code> which will in turn trigger a modal dialog to display an error message.</li>
 </ul>
 
 
@@ -770,7 +770,7 @@
 
 <p>We then use the <code>Ember.TextField</code> view to create a text and password type input fields and bind them to the storageAccount and storageKey fields on the controller.</p>
 
-<p>Finally the click action on the &#8220;Explore&#8221; button is set to be handled by the <code>login</code> function on our controller.</p>
+<p>Finally the click action on the "Explore" button is set to be handled by the <code>login</code> function on our controller.</p>
 
 <figure class='code'><figcaption><span>index.hbs</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -833,7 +833,7 @@
 
 <h4>Models</h4>
 
-<p>In order to build out the rest of the application we&#8217;ll need to go ahead and create the various models that we will need we are..</p>
+<p>In order to build out the rest of the application we'll need to go ahead and create the various models that we will need we are..</p>
 
 <ul>
 <li><code>Tables</code> - storage account details and a list of associated tables.</li>
@@ -843,7 +843,7 @@
 </ul>
 
 
-<p>As we are not using Ember Data we&#8217;ll just extend <code>Ember.Object</code> when creating our models. The <code>Ember.Object.extend</code> method is used to define properties for each model, once defined an instance of the <code>Tables</code> model can be created using the <code>App.Tables.create</code> method. The <code>reopenClass</code> method can be used to add static properties and methods to the model.</p>
+<p>As we are not using Ember Data we'll just extend <code>Ember.Object</code> when creating our models. The <code>Ember.Object.extend</code> method is used to define properties for each model, once defined an instance of the <code>Tables</code> model can be created using the <code>App.Tables.create</code> method. The <code>reopenClass</code> method can be used to add static properties and methods to the model.</p>
 
 <figure class='code'><figcaption><span>Tables.js</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -1010,7 +1010,7 @@
 <li><code>id</code> - a unique id for the row, this is a combination of the <code>PartitionKey</code> &amp; <code>RowKey</code>.</li>
 <li><code>PartitionKey</code> - the Azure table service partition key.</li>
 <li><code>RowKey</code> - the Azure table service row key.</li>
-<li><code>isSelected</code> - this probably shouldn&#8217;t be a property on the model, it&#8217;s used to toggle the selection status of rows within the table.</li>
+<li><code>isSelected</code> - this probably shouldn't be a property on the model, it's used to toggle the selection status of rows within the table.</li>
 <li><code>partitionKeyChanged</code> - as above this property is used when rendering the table, when the partition key is different from the previous row a new partition key header is rendered.</li>
 </ul>
 
@@ -1150,9 +1150,9 @@
 
 <h4>Modal Dialogs</h4>
 
-<p>We are using the Bootstrap modal dialog to display errors that occur in the application. When we want to use other libraries that manipulate the DOM we need to do a little bit of work to ensure that whatever we are using doesn&#8217;t step on Embers toes and interfere with its rendering.</p>
+<p>We are using the Bootstrap modal dialog to display errors that occur in the application. When we want to use other libraries that manipulate the DOM we need to do a little bit of work to ensure that whatever we are using doesn't step on Embers toes and interfere with its rendering.</p>
 
-<p>Typically what you&#8217;ll end up doing is creating a <code>View</code> which wraps the library/plugin you are using. A <code>View</code> contains two import hooks which are <code>didInsertElement</code> and <code>willDestroyElement</code>. From Embers perspective a <code>View</code> is represented by a single DOM element and after this has been inserted into the DOM it will call <code>didInsertElement</code>. We can use this hook to create an instance of the Bootstrap Modal dialog plugin, render it within our container DOM element and hook up any events to corresponding handlers within the view.</p>
+<p>Typically what you'll end up doing is creating a <code>View</code> which wraps the library/plugin you are using. A <code>View</code> contains two import hooks which are <code>didInsertElement</code> and <code>willDestroyElement</code>. From Embers perspective a <code>View</code> is represented by a single DOM element and after this has been inserted into the DOM it will call <code>didInsertElement</code>. We can use this hook to create an instance of the Bootstrap Modal dialog plugin, render it within our container DOM element and hook up any events to corresponding handlers within the view.</p>
 
 <figure class='code'><figcaption><span>BootstrapModalView.js</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -1235,7 +1235,7 @@
 <li><code>positionSelector</code> - the dialog can be displayed relative to another element, this should be a selector expression.</li>
 <li><code>position</code> - if position relative to another element this should be one of top, right, bottom or left.</li>
 <li><code>didInsertElement</code> - creates an instance of the Bootstrap Modal dialog plugin.</li>
-<li><code>close</code> - the <code>errorModal.hbs</code> template triggers this action when it&#8217;s close button is clicked. We in turn trigger a <code>closeModal</code> which will eventually be handled by the application route.</li>
+<li><code>close</code> - the <code>errorModal.hbs</code> template triggers this action when it's close button is clicked. We in turn trigger a <code>closeModal</code> which will eventually be handled by the application route.</li>
 </ul>
 
 
@@ -1294,7 +1294,7 @@
 
 
 <ul>
-<li><code>model</code> - as we extend from <code>AuthenticatedRoute</code> we have the users storage account credentials available, we then make a call to the JSON API to retrieve a list of tables defined for the account. As we haven&#8217;t defined a controller Ember will automatically create one, set the model &amp; bind it to the corresponding template.</li>
+<li><code>model</code> - as we extend from <code>AuthenticatedRoute</code> we have the users storage account credentials available, we then make a call to the JSON API to retrieve a list of tables defined for the account. As we haven't defined a controller Ember will automatically create one, set the model &amp; bind it to the corresponding template.</li>
 </ul>
 
 
@@ -1772,7 +1772,7 @@
 
 <p>The template above uses a customised version of <code>Ember.CheckBox</code> and also a custom Handlebars helper <code>tableCell</code>.</p>
 
-<p>In the template the user is allowed to toggle row selection by either checking the &#8220;isSelected&#8221; checkbox or by just clicking on the row itself. The problem with the standard <code>Ember.CheckBox</code> is that there is no way to stop the click event from bubbling up and subsequently triggering the <code>toggleRowSelection</code> action. The customised version below has an extra &#8220;bubbles&#8221; property which when set to false will disable click event propagation.</p>
+<p>In the template the user is allowed to toggle row selection by either checking the "isSelected" checkbox or by just clicking on the row itself. The problem with the standard <code>Ember.CheckBox</code> is that there is no way to stop the click event from bubbling up and subsequently triggering the <code>toggleRowSelection</code> action. The customised version below has an extra "bubbles" property which when set to false will disable click event propagation.</p>
 
 <figure class='code'><figcaption><span>EmberCheckbox.js</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -2094,11 +2094,11 @@
 
 <h4>Look ma, no unit tests!</h4>
 
-<p>So that&#8217;s enough for this morning, it&#8217;s not quite fully complete but getting there. Yes there aren&#8217;t any unit tests, I suck. Also I haven&#8217;t implemented the record deletion seen in Jeff&#8217;s app and there is also a problem with URLs regarding pagination.</p>
+<p>So that's enough for this morning, it's not quite fully complete but getting there. Yes there aren't any unit tests, I suck. Also I haven't implemented the record deletion seen in Jeff's app and there is also a problem with URLs regarding pagination.</p>
 
 <p>One of the core tenants of Ember is that you should be able to reload an app or share a link with someone and be able get back to exactly that point within the application. As they say this is one of the great things about the web and a major advantage we have over native applications.</p>
 
-<p>Due to the way paging works on Azure tables it isn&#8217;t possible to restore the application back to particular page based on the URL structure I have in place. I could always embed the continuation tokens within the URL or come up with a workaround but that&#8217;s for another day.</p>
+<p>Due to the way paging works on Azure tables it isn't possible to restore the application back to particular page based on the URL structure I have in place. I could always embed the continuation tokens within the URL or come up with a workaround but that's for another day.</p>
 
 <ul>
 <li>The source for the app is here <a href="http://github.com/ronnieDrew/azure-table-explorer">http://github.com/ronnieDrew/azure-table-explorer</a></li>
@@ -2109,22 +2109,22 @@
   </entry>
   
   <entry>
-    <title type="html"><![CDATA[Creating a Chocolatey package]]></title>
+    <title type="html"><![CDATA[Creating a Chocolatey Package]]></title>
     <link href="http://www.brewingcode.com/blog/2013/08/04/creating-a-chocolatey-package/"/>
-    <updated>2013-08-04T14:01:00+01:00</updated>
+    <updated>2013-08-04T14:01:00+00:00</updated>
     <id>http://www.brewingcode.com/blog/2013/08/04/creating-a-chocolatey-package</id>
-    <content type="html"><![CDATA[<p>These days <a href="http://chocolatey.org/">Chocolatey</a> is pretty much the first thing I install when working on a new PC. The utility of having that tool you need just a few keystrokes away is something we&#8217;ve been missing on Windows for years.</p>
+    <content type="html"><![CDATA[<p>These days <a href="http://chocolatey.org/">Chocolatey</a> is pretty much the first thing I install when working on a new PC. The utility of having that tool you need just a few keystrokes away is something we've been missing on Windows for years.</p>
 
-<p>It&#8217;s getting to the point where if a package isn&#8217;t on Chocolatey then it&#8217;s dead to me.</p>
+<p>It's getting to the point where if a package isn't on Chocolatey then it's dead to me.</p>
 
-<p>That said with the <a href="http://chocolatey.org/packages">package list</a> hovering around the 1,200 mark there are gaps that you&#8217;re going to run into sooner or later. It&#8217;s up to the community to fill these gaps.</p>
+<p>That said with the <a href="http://chocolatey.org/packages">package list</a> hovering around the 1,200 mark there are gaps that you're going to run into sooner or later. It's up to the community to fill these gaps.</p>
 
 <!--more-->
 
 
-<p>Today I&#8217;m planning on testing some VM configurations on Azure with a view to optimizing IO performance. I&#8217;m a big <a href="http://ravendb.net">RavenDb</a> fan but running it on an Azure VM is problematic due to IO issues. Both the main Raven hosted solution providers (<a href="http://www.cloudbird.net">CloudBird</a> &amp; <a href="http://ravenhq.com">RavenHQ</a>) run on AWS so I thought I&#8217;d test the IO performance of some comparable VM instances on Azure &amp; AWS.</p>
+<p>Today I'm planning on testing some VM configurations on Azure with a view to optimizing IO performance. I'm a big <a href="http://ravendb.net">RavenDb</a> fan but running it on an Azure VM is problematic due to IO issues. Both the main Raven hosted solution providers (<a href="http://www.cloudbird.net">CloudBird</a> &amp; <a href="http://ravenhq.com">RavenHQ</a>) run on AWS so I thought I'd test the IO performance of some comparable VM instances on Azure &amp; AWS.</p>
 
-<p>In order to benchmark IO I&#8217;m using <a href="http://www.microsoft.com/en-us/download/details.aspx?id=20163">SQLIO</a> but as it&#8217;s not on the Chocolatey package gallery I thought I&#8217;d take 5 minutes out of my day to add it.</p>
+<p>In order to benchmark IO I'm using <a href="http://www.microsoft.com/en-us/download/details.aspx?id=20163">SQLIO</a> but as it's not on the Chocolatey package gallery I thought I'd take 5 minutes out of my day to add it.</p>
 
 <p>The Chocolatey package really just consists of some meta data in a <a href="https://github.com/chocolatey/chocolatey/wiki/CreatePackages#nuspec">nuspec file</a>, an image to display on the gallery and 2 powershell scripts to silently install/uninstall the SQLIO MSI.</p>
 
@@ -2183,7 +2183,7 @@
 
 <p>The PowerShell files are just small wrappers around the MSIs own install/uninstall functionality. On both install/uninstall we need to check the install state in the registry and in order to do this we need to know the GUID assigned to the MSI.</p>
 
-<p>A quick way to get the GUID is to run the following PowerShell command after you&#8217;ve installed the MSI.</p>
+<p>A quick way to get the GUID is to run the following PowerShell command after you've installed the MSI.</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 </pre></td><td class='code'><pre><code class='powershell'><span class='line'><span class="nb">Get-WmiObject</span> <span class="n">-Class</span> <span class="n">Win32_Product</span> <span class="p">|</span> <span class="nb">Where-Object</span> <span class="p">{</span> <span class="nv">$_</span><span class="p">.</span><span class="n">Name</span> <span class="o">-match</span> <span class="s2">&quot;sqlio&quot;</span> <span class="p">}</span>
@@ -2229,11 +2229,11 @@
 </span><span class='line'>    <span class="nb">Write-ChocolateyFailure</span> <span class="nv">$package</span> <span class="s2">&quot;$package is already installed!&quot;</span>
 </span><span class='line'>  <span class="p">}</span>
 </span><span class='line'>  <span class="k">else</span> <span class="p">{</span>
-</span><span class='line'>    <span class="nv">$params</span> <span class="p">=</span> <span class="err">@</span><span class="p">{</span>
-</span><span class='line'>      <span class="n">PackageName</span> <span class="p">=</span> <span class="nv">$package</span><span class="err">;</span>
-</span><span class='line'>      <span class="n">FileType</span> <span class="p">=</span> <span class="s1">&#39;msi&#39;</span><span class="err">;</span>
-</span><span class='line'>      <span class="n">SilentArgs</span> <span class="p">=</span> <span class="s1">&#39;/QUIET&#39;</span><span class="err">;</span>
-</span><span class='line'>      <span class="n">Url</span> <span class="p">=</span> <span class="s2">&quot;http://download.microsoft.com/download/f/3/f/f3f92f8b-b24e-4c2e-9e86-d66df1f6f83b/SQLIO.msi&quot;</span><span class="err">;</span>
+</span><span class='line'>    <span class="nv">$params</span> <span class="p">=</span> <span class="p">@{</span>
+</span><span class='line'>      <span class="n">PackageName</span> <span class="p">=</span> <span class="nv">$package</span><span class="p">;</span>
+</span><span class='line'>      <span class="n">FileType</span> <span class="p">=</span> <span class="s1">&#39;msi&#39;</span><span class="p">;</span>
+</span><span class='line'>      <span class="n">SilentArgs</span> <span class="p">=</span> <span class="s1">&#39;/QUIET&#39;</span><span class="p">;</span>
+</span><span class='line'>      <span class="n">Url</span> <span class="p">=</span> <span class="s2">&quot;http://download.microsoft.com/download/f/3/f/f3f92f8b-b24e-4c2e-9e86-d66df1f6f83b/SQLIO.msi&quot;</span><span class="p">;</span>
 </span><span class='line'>    <span class="p">}</span>
 </span><span class='line'>
 </span><span class='line'>    <span class="n">Install-ChocolateyPackage</span> <span class="nv">@params</span>
@@ -2242,8 +2242,8 @@
 </span><span class='line'>
 </span><span class='line'><span class="p">}</span> <span class="k">catch</span> <span class="p">{</span>
 </span><span class='line'>
-</span><span class='line'>  <span class="nb">Write-ChocolateyFailure</span> <span class="nv">$package</span> <span class="s2">&quot;</span><span class="si">$(</span><span class="err">$</span><span class="si">_.Exception.Message)</span><span class="s2">&quot;</span>
-</span><span class='line'>  <span class="n">throw</span>
+</span><span class='line'>  <span class="nb">Write-ChocolateyFailure</span> <span class="nv">$package</span> <span class="s2">&quot;</span><span class="p">$(</span><span class="nv">$_</span><span class="p">.</span><span class="n">Exception</span><span class="p">.</span><span class="n">Message</span><span class="p">)</span><span class="s2">&quot;</span>
+</span><span class='line'>  <span class="k">throw</span>
 </span><span class='line'>
 </span><span class='line'><span class="p">}</span>
 </span></code></pre></td></tr></table></div></figure>
@@ -2289,8 +2289,8 @@
 </span><span class='line'>
 </span><span class='line'><span class="p">}</span> <span class="k">catch</span> <span class="p">{</span>
 </span><span class='line'>
-</span><span class='line'>  <span class="nb">Write-ChocolateyFailure</span> <span class="nv">$package</span> <span class="s2">&quot;</span><span class="si">$(</span><span class="err">$</span><span class="si">_.Exception.Message)</span><span class="s2">&quot;</span>
-</span><span class='line'>  <span class="n">throw</span>
+</span><span class='line'>  <span class="nb">Write-ChocolateyFailure</span> <span class="nv">$package</span> <span class="s2">&quot;</span><span class="p">$(</span><span class="nv">$_</span><span class="p">.</span><span class="n">Exception</span><span class="p">.</span><span class="n">Message</span><span class="p">)</span><span class="s2">&quot;</span>
+</span><span class='line'>  <span class="k">throw</span>
 </span><span class='line'>
 </span><span class='line'><span class="p">}</span>
 </span></code></pre></td></tr></table></div></figure>
@@ -2314,35 +2314,35 @@
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>With that we&#8217;re done, now back to Azure &amp; RavenDb&#8230;</p>
+<p>With that we're done, now back to Azure &amp; RavenDb...</p>
 ]]></content>
   </entry>
   
   <entry>
     <title type="html"><![CDATA[Getting Started]]></title>
     <link href="http://www.brewingcode.com/blog/2013/08/03/getting-started/"/>
-    <updated>2013-08-03T09:13:00+01:00</updated>
+    <updated>2013-08-03T09:13:00+00:00</updated>
     <id>http://www.brewingcode.com/blog/2013/08/03/getting-started</id>
-    <content type="html"><![CDATA[<p>So how do you start the first post on a blog that you&#8217;ve been putting off for years? For me it&#8217;s resisting the urge to read all the first posts on the various tech blogs I follow to identify common themes and patterns.</p>
+    <content type="html"><![CDATA[<p>So how do you start the first post on a blog that you've been putting off for years? For me it's resisting the urge to read all the first posts on the various tech blogs I follow to identify common themes and patterns.</p>
 
 <p>But that would be lame. Urge resisted.</p>
 
-<p>So a bit of background instead. I started programing in the late 90&#8217;s building desktop applications in VB6 in the financial sector but transitioned to the Web in 2006. These days my focus is in C# &amp; JavaScript though I may dabble in Ruby from time to time.</p>
+<p>So a bit of background instead. I started programing in the late 90's building desktop applications in VB6 in the financial sector but transitioned to the Web in 2006. These days my focus is in C# &amp; JavaScript though I may dabble in Ruby from time to time.</p>
 
-<p>.Net can take a bit of a bashing now and again and while it might not have a thriving OSS community to rival JavaScript/Ruby/Python/etc we do have some fantastic libraries/frameworks and things are slowly getting better. C# is a beautiful language and it&#8217;s a joy to develop using the likes <a href="https://github.com/ServiceStack/ServiceStack/wiki" title="ServiceStack">ServiceStack</a>, <a href="http://ravendb.net/" title="RavenDb">RavenDb</a> &amp; <a href="https://github.com/SignalR/SignalR" title="SignalR">SignalR</a> on a daily basis. Thanks to <a href="http://xamarin.com" title="Xamarin">Xamarin</a> C# has never had greater reach; the world has gone mobile and C# is uniquely positioned to provide native UI &amp; performance across iOS, Android &amp; Windows. I&#8217;m a big supporter of the Open Web but this an area I&#8217;m going to dive into in the coming year.</p>
+<p>.Net can take a bit of a bashing now and again and while it might not have a thriving OSS community to rival JavaScript/Ruby/Python/etc we do have some fantastic libraries/frameworks and things are slowly getting better. C# is a beautiful language and it's a joy to develop using the likes <a href="https://github.com/ServiceStack/ServiceStack/wiki" title="ServiceStack">ServiceStack</a>, <a href="http://ravendb.net/" title="RavenDb">RavenDb</a> &amp; <a href="https://github.com/SignalR/SignalR" title="SignalR">SignalR</a> on a daily basis. Thanks to <a href="http://xamarin.com" title="Xamarin">Xamarin</a> C# has never had greater reach; the world has gone mobile and C# is uniquely positioned to provide native UI &amp; performance across iOS, Android &amp; Windows. I'm a big supporter of the Open Web but this an area I'm going to dive into in the coming year.</p>
 
 <p>However..</p>
 
 <blockquote><p>Any application that can be written in JavaScript, will eventually be written in JavaScript.</p><footer><strong>Jeff Atwood</strong> <cite><a href='http://www.codinghorror.com/blog/2007/07/the-principle-of-least-power.html'>The Principle of Least Power</a></cite></footer></blockquote>
 
 
-<p>Software is <a href="http://online.wsj.com/article/SB10001424053111903480904576512250915629460.html" title="Marc Andreessen on Why Software Is Eating The World">eating the world</a> and a huge amount of that software is being written in JavaScript. When I started Web development in 2006 IE6 had something like 90% market share and most people considered JavaScript a horribly broken joke of language. When you look how far we&#8217;ve come since 2008 it&#8217;s amazing - Web GL, Sockets, Local Storage, Video, Audio, Transitions, Animations, Geo Location and on and on. It&#8217;s kind of mind blowing what can be done in JavaScript these days, recently the Unreal engine was <a href="https://blog.mozilla.org/blog/2013/03/27/mozilla-is-unlocking-the-power-of-the-web-as-a-platform-for-gaming/" title="asm.js: it's really fast backwards compatible and now in the release version of firefox">ported to ASM in 4 days!</a></p>
+<p>Software is <a href="http://online.wsj.com/article/SB10001424053111903480904576512250915629460.html" title="Marc Andreessen on Why Software Is Eating The World">eating the world</a> and a huge amount of that software is being written in JavaScript. When I started Web development in 2006 IE6 had something like 90% market share and most people considered JavaScript a horribly broken joke of language. When you look how far we've come since 2008 it's amazing - Web GL, Sockets, Local Storage, Video, Audio, Transitions, Animations, Geo Location and on and on. It's kind of mind blowing what can be done in JavaScript these days, recently the Unreal engine was <a href="https://blog.mozilla.org/blog/2013/03/27/mozilla-is-unlocking-the-power-of-the-web-as-a-platform-for-gaming/" title="asm.js: it's really fast backwards compatible and now in the release version of firefox">ported to ASM in 4 days!</a></p>
 
 <p>Microsoft have also started to take their browser seriously again committing to shortened release schedule and automatic updates. With XP finally coming to <a href="http://www.microsoft.com/en-us/windows/endofsupport.aspx" title="Windows XP End Of Support">end of life</a> we are getting close to the nirvana where the majority of people will eventually be using <a href="http://tomdale.net/2013/05/evergreen-browsers/" title="Evergreen Browsers">evergreen browsers</a>. The pace of development for web standards has been great for the last 5 years but I think we are poised for an explosion of features over the next 5.</p>
 
-<p>It&#8217;s just an incredibly exciting time to be Web developer!</p>
+<p>It's just an incredibly exciting time to be Web developer!</p>
 
-<p>So that&#8217;s it, first post complete and hopefully lots more to come&#8230;</p>
+<p>So that's it, first post complete and hopefully lots more to come...</p>
 
 <p><code>rake new_post["who knows?"]</code></p>
 ]]></content>

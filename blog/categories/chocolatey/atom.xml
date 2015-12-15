@@ -4,19 +4,19 @@
   <title><![CDATA[Category: Chocolatey | Brewing Code]]></title>
   <link href="http://www.brewingcode.com/blog/categories/chocolatey/atom.xml" rel="self"/>
   <link href="http://www.brewingcode.com/"/>
-  <updated>2013-12-13T15:05:21+00:00</updated>
+  <updated>2015-12-15T10:49:22+00:00</updated>
   <id>http://www.brewingcode.com/</id>
   <author>
     <name><![CDATA[Ronan Gibney]]></name>
-    
+    <email><![CDATA[ronnieDrew@gmail.com]]></email>
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
   
   <entry>
-    <title type="html"><![CDATA[Creating a Chocolatey package]]></title>
+    <title type="html"><![CDATA[Creating a Chocolatey Package]]></title>
     <link href="http://www.brewingcode.com/blog/2013/08/04/creating-a-chocolatey-package/"/>
-    <updated>2013-08-04T14:01:00+01:00</updated>
+    <updated>2013-08-04T14:01:00+00:00</updated>
     <id>http://www.brewingcode.com/blog/2013/08/04/creating-a-chocolatey-package</id>
     <content type="html"><![CDATA[<p>These days <a href="http://chocolatey.org/">Chocolatey</a> is pretty much the first thing I install when working on a new PC. The utility of having that tool you need just a few keystrokes away is something we've been missing on Windows for years.</p>
 
@@ -35,38 +35,33 @@
 
 <p>The first thing we need to do is setup a <a href="https://github.com/ronnieDrew/ChocolateyPackages">GitHub repository</a> to host my Chocolatey packages. Then we create a directory to hold the sqlio package with the following 4 files.</p>
 
-<p><code>
-ChocolateyPackages\sqlio\sqlio.nuspec
+<pre><code>ChocolateyPackages\sqlio\sqlio.nuspec
 ChocolateyPackages\sqlio\sqlio.png
 ChocolateyPackages\sqlio\tools\chocolateyInstall.ps1
 ChocolateyPackages\sqlio\tools\chocolateyUninstall.ps1
-</code></p>
+</code></pre>
 
 <p>The meta data in the nuspec file is all fairly self-explanatory, note that the iconUrl setting is the image that will be shown within the Chocolatey package gallery. This should be a png with a minimum size of 128x128.</p>
 
-<p>``` xml sqlio.nuspec
-&lt;?xml version="1.0" encoding="utf-8"?>
-<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"></p>
-
-<pre><code>&lt;metadata&gt;
-    &lt;id&gt;sqlio&lt;/id&gt;
-    &lt;version&gt;1.0&lt;/version&gt;
-    &lt;title&gt;sqlio&lt;/title&gt;
-    &lt;authors&gt;Ronan Gibney&lt;/authors&gt;
-    &lt;owners&gt;Ronan Gibney&lt;/owners&gt;
-    &lt;licenseUrl&gt;http://www.microsoft.com/en-us/download/details.aspx?id=20163&lt;/licenseUrl&gt;
-    &lt;projectUrl&gt;http://www.microsoft.com/en-us/download/details.aspx?id=20163&lt;/projectUrl&gt;
-    &lt;iconUrl&gt;https://github.com/ronnieDrew/ChocolateyPackages/raw/master/sqlio/sqlio.png&lt;/iconUrl&gt;
-    &lt;requireLicenseAcceptance&gt;true&lt;/requireLicenseAcceptance&gt;
-    &lt;description&gt;SQLIO is a tool provided by Microsoft which can also be used to determine the I/O capacity of a given configuration. SQLIO is provided ‘as is’ and there is no support offered for any problems encountered when using the tool. Please refer to the EULA.doc for the license agreement prior to using this tool.&lt;/description&gt;
-    &lt;summary&gt;SQLIO is a tool provided by Microsoft which can also be used to determine the I/O capacity of a given configuration.&lt;/summary&gt;
-    &lt;releaseNotes&gt;http://www.microsoft.com/en-us/download/details.aspx?id=20163&lt;/releaseNotes&gt;
-    &lt;tags&gt;sqlio&lt;/tags&gt;
-&lt;/metadata&gt;
+<pre><code class="xml sqlio.nuspec">&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"&gt;
+    &lt;metadata&gt;
+        &lt;id&gt;sqlio&lt;/id&gt;
+        &lt;version&gt;1.0&lt;/version&gt;
+        &lt;title&gt;sqlio&lt;/title&gt;
+        &lt;authors&gt;Ronan Gibney&lt;/authors&gt;
+        &lt;owners&gt;Ronan Gibney&lt;/owners&gt;
+        &lt;licenseUrl&gt;http://www.microsoft.com/en-us/download/details.aspx?id=20163&lt;/licenseUrl&gt;
+        &lt;projectUrl&gt;http://www.microsoft.com/en-us/download/details.aspx?id=20163&lt;/projectUrl&gt;
+        &lt;iconUrl&gt;https://github.com/ronnieDrew/ChocolateyPackages/raw/master/sqlio/sqlio.png&lt;/iconUrl&gt;
+        &lt;requireLicenseAcceptance&gt;true&lt;/requireLicenseAcceptance&gt;
+        &lt;description&gt;SQLIO is a tool provided by Microsoft which can also be used to determine the I/O capacity of a given configuration. SQLIO is provided ‘as is’ and there is no support offered for any problems encountered when using the tool. Please refer to the EULA.doc for the license agreement prior to using this tool.&lt;/description&gt;
+        &lt;summary&gt;SQLIO is a tool provided by Microsoft which can also be used to determine the I/O capacity of a given configuration.&lt;/summary&gt;
+        &lt;releaseNotes&gt;http://www.microsoft.com/en-us/download/details.aspx?id=20163&lt;/releaseNotes&gt;
+        &lt;tags&gt;sqlio&lt;/tags&gt;
+    &lt;/metadata&gt;
+&lt;/package&gt;
 </code></pre>
-
-<p></package>
-```</p>
 
 <p>The PowerShell files are just small wrappers around the MSIs own install/uninstall functionality. On both install/uninstall we need to check the install state in the registry and in order to do this we need to know the GUID assigned to the MSI.</p>
 
@@ -77,86 +72,71 @@ Get-WmiObject -Class Win32_Product | Where-Object { $_.Name -match "sqlio" }
 
 <p>The install script just checks the install state in the registry and then calls the Chocolatey helper function <code>Install-ChocolateyPackage</code> which will download and install the MSI.</p>
 
-<p>``` powershell chocolateyInstall.ps1
-$package = 'sqlio'
+<pre><code class="powershell chocolateyInstall.ps1">$package = 'sqlio'
 $build = '1'
-$guid='{DD971DE9-FAF0-4A15-9BE4-5D766B05D11E}'</p>
+$guid='{DD971DE9-FAF0-4A15-9BE4-5D766B05D11E}'
 
-<p>try {</p>
+try {
 
-<p>  if (Test-Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$guid") {</p>
+  if (Test-Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$guid") {
+    Write-ChocolateyFailure $package "$package is already installed!"
+  }
+  else {
+    $params = @{
+      PackageName = $package;
+      FileType = 'msi';
+      SilentArgs = '/QUIET';
+      Url = "http://download.microsoft.com/download/f/3/f/f3f92f8b-b24e-4c2e-9e86-d66df1f6f83b/SQLIO.msi";
+    }
 
-<pre><code>Write-ChocolateyFailure $package "$package is already installed!"
-</code></pre>
+    Install-ChocolateyPackage @params
+    Write-ChocolateySuccess $package
+  }
 
-<p>  }
-  else {</p>
+} catch {
 
-<pre><code>$params = @{
-  PackageName = $package;
-  FileType = 'msi';
-  SilentArgs = '/QUIET';
-  Url = "http://download.microsoft.com/download/f/3/f/f3f92f8b-b24e-4c2e-9e86-d66df1f6f83b/SQLIO.msi";
+  Write-ChocolateyFailure $package "$($_.Exception.Message)"
+  throw 
+
 }
-
-Install-ChocolateyPackage @params
-Write-ChocolateySuccess $package
 </code></pre>
-
-<p>  }</p>
-
-<p>} catch {</p>
-
-<p>  Write-ChocolateyFailure $package "$($_.Exception.Message)"
-  throw</p>
-
-<p>}</p>
-
-<p>```</p>
 
 <p>And then we handle the uninstall. Again we just check the install state using the same GUID as before and hand over to the appropriate Chocolatey helper function to uninstall the MSI. Chocolatey in turn will elevate admin access and use msiexec to perform the uninstall.</p>
 
-<p>``` powershell chocolateyUninstall.ps1
-$package = 'sqlio'
+<pre><code class="powershell chocolateyUninstall.ps1">$package = 'sqlio'
 $build = '1'
-$clsid='{DD971DE9-FAF0-4A15-9BE4-5D766B05D11E}'</p>
+$clsid='{DD971DE9-FAF0-4A15-9BE4-5D766B05D11E}'
 
-<p>try {</p>
+try {
 
-<p>  if (Test-Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$clsid") {</p>
+  if (Test-Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$clsid") {
 
-<pre><code>Uninstall-ChocolateyPackage $package 'msi' "$clsid /quiet" 
-Write-ChocolateySuccess $package
+    Uninstall-ChocolateyPackage $package 'msi' "$clsid /quiet" 
+    Write-ChocolateySuccess $package
+
+  } else {
+    Write-ChocolateyFailure $package "$package is not installed!"
+  }
+
+} catch {
+
+  Write-ChocolateyFailure $package "$($_.Exception.Message)"
+  throw 
+
+}
 </code></pre>
-
-<p>  } else {</p>
-
-<pre><code>Write-ChocolateyFailure $package "$package is not installed!"
-</code></pre>
-
-<p>  }</p>
-
-<p>} catch {</p>
-
-<p>  Write-ChocolateyFailure $package "$($_.Exception.Message)"
-  throw</p>
-
-<p>}
-```</p>
 
 <p>With that we just need to create &amp; test the package itself. To create the package we just run <code>cpack .\sqlio.nuspec</code> in package directory, this will bundle our nuspec and PowerShell files into a package called <code>sqlio.1.0.nupkg</code>. To test the package we can use <code>cinst sqlio -source %cd%</code> which will tell Chocolatey to install the package using the current directory.</p>
 
-<p><code>powershell
-cpack .\sqlio.nuspec
+<pre><code class="powershell">cpack .\sqlio.nuspec
 cinst sqlio -source %cd%
-</code></p>
+</code></pre>
 
 <p>The final step is to push the package to the Chocolatey gallery. To do this we need to setup an account on <a href="https://chocolatey.org/account/Register">http://chocolatey.org</a> to obtain an api key. We then need to store the apikey for chocolatey.org and then push the package to the gallery.</p>
 
-<p><code>
-nuget setApiKey &lt;Your-Api-Key&gt; -Source http://chocolatey.org/
-cpush sqlio.1.0.nupkg
-</code></p>
+<pre><code>nuget setApiKey &lt;Your-Api-Key&gt; -Source http://chocolatey.org/
+cpush sqlio.1.0.nupkg 
+</code></pre>
 
 <p>With that we're done, now back to Azure &amp; RavenDb...</p>
 ]]></content>
