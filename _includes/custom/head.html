@@ -1,0 +1,36 @@
+<!-- Google Plus Author-->
+<link rel="author" href="https://plus.google.com/101387387055722594734/posts"/>
+
+<!-- twitter card -->
+<meta name="twitter:card" content="summary">
+<meta name="twitter:site" content="@ronnieDrew">
+<meta name="twitter:creator" content="@ronnieDrew">
+<meta name="twitter:title" content="{% if page.title %}{{ page.title }} - {% endif %}{{ site.title }}">
+<meta name="twitter:url" content="{{ canonical }}">
+<meta name="twitter:description" content="{{ description | strip_html | condense_spaces | truncate:150 }}">
+
+<!-- open graph -->
+<meta property="og:title" content="{% if page.title %}{{ page.title }} - {% endif %}{{ site.title }}"/>
+<meta property="og:type" content="{{ ogtype }}"/>
+<meta property="og:url" content="{{ canonical }}"/>
+<meta property="og:site_name" content="{{ site.title }}"/>
+<meta property="og:description" content="{{ description | strip_html | condense_spaces | truncate:150 }}"/>
+
+<!-- Windows -->
+<meta name="application-name" content="{{ site.title }}"/>
+<meta name="msapplication-TileColor" content="#000000"/>
+<meta name="msapplication-square70x70logo" content="{{ root_url }}/images/windows-tile-tiny.png"/>
+<meta name="msapplication-square150x150logo" content="{{ root_url }}/images/windows-tile-square.png"/>
+<meta name="msapplication-wide310x150logo" content="{{ root_url }}/images/windows-tile-wide.png"/>
+<meta name="msapplication-square310x310logo" content="{{ root_url }}/images/windows-tile-large.png"/>
+<meta name="msapplication-notification" content="frequency=30;polling-uri=http://notifications.buildmypinnedsite.com/?feed=http://www.brewingcode.com/atom.xml&amp;id=1;polling-uri2=http://notifications.buildmypinnedsite.com/?feed=http://www.brewingcode.com/atom.xml&amp;id=2;polling-uri3=http://notifications.buildmypinnedsite.com/?feed=http://www.brewingcode.com/atom.xml&amp;id=3;polling-uri4=http://notifications.buildmypinnedsite.com/?feed=http://www.brewingcode.com/atom.xml&amp;id=4;polling-uri5=http://notifications.buildmypinnedsite.com/?feed=http://www.brewingcode.com/atom.xml&amp;id=5; cycle=1"/>
+
+<!-- Apple -->
+<link rel="apple-touch-icon" href="{{ root_url }}/images/touch-icon-iphone.png">
+<link rel="apple-touch-icon" sizes="76x76" href="{{ root_url }}/images/touch-icon-ipad.png">
+<link rel="apple-touch-icon" sizes="120x120" href="{{ root_url }}/images/touch-icon-iphone-retina.png">
+<link rel="apple-touch-icon" sizes="152x152" href="{{ root_url }}/images/touch-icon-ipad-retina.png">
+
+<!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
